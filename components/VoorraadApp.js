@@ -4,6 +4,12 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabaseClient';
 
+const FLENS_PREFIXES = ['MB', 'SB', 'TCB', 'JB', 'TAB'];
+
+function isFlens(code) {
+  return FLENS_PREFIXES.some((p) => (code || '').startsWith(p));
+}
+
 function stockFlag(v) {
   if (v === 0) return <span className="flag flag-zero">0</span>;
   if (v > 0 && v <= 3) return <span className="flag flag-low">{v}</span>;
@@ -23,13 +29,22 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
   const [fBouw, setFBouw] = useState('');
   const [fPolen, setFPolen] = useState('');
   const [fBvorm, setFBvorm] = useState('');
+  const [fVermogen, setFVermogen] = useState('');
+  const [fVolt, setFVolt] = useState('');
+  const [fIe, setFIe] = useState('');
+  const [fMateriaal, setFMateriaal] = useState('');
   const [onlyStock, setOnlyStock] = useState(false);
+  const [onlyFlens, setOnlyFlens] = useState(false);
 
   const products = initialProducts;
 
   const bouwOptions = useMemo(() => uniqSorted(products.map((p) => p.bouwgrootte)), [products]);
   const polenOptions = useMemo(() => uniqSorted(products.map((p) => p.polen)), [products]);
   const bvormOptions = useMemo(() => uniqSorted(products.map((p) => p.bouwvorm)), [products]);
+  const vermogenOptions = useMemo(() => uniqSorted(products.map((p) => p.vermogen)), [products]);
+  const voltOptions = useMemo(() => uniqSorted(products.map((p) => p.volt)), [products]);
+  const ieOptions = useMemo(() => uniqSorted(products.map((p) => p.ie_klasse)), [products]);
+  const materiaalOptions = useMemo(() => uniqSorted(products.map((p) => p.materiaal)), [products]);
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
@@ -38,10 +53,15 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
       if (fBouw && p.bouwgrootte !== fBouw) return false;
       if (fPolen && p.polen !== fPolen) return false;
       if (fBvorm && p.bouwvorm !== fBvorm) return false;
+      if (fVermogen && p.vermogen !== fVermogen) return false;
+      if (fVolt && p.volt !== fVolt) return false;
+      if (fIe && p.ie_klasse !== fIe) return false;
+      if (fMateriaal && p.materiaal !== fMateriaal) return false;
       if (onlyStock && !(p.vrije_voorraad > 0)) return false;
+      if (onlyFlens && !isFlens(p.code)) return false;
       return true;
     });
-  }, [products, search, fBouw, fPolen, fBvorm, onlyStock]);
+  }, [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -50,11 +70,17 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
     router.refresh();
   }
 
+  function resetFilters() {
+    setSearch(''); setFBouw(''); setFPolen(''); setFBvorm('');
+    setFVermogen(''); setFVolt(''); setFIe(''); setFMateriaal('');
+    setOnlyStock(false); setOnlyFlens(false);
+  }
+
   return (
     <div className="wrap">
       <header>
         <div className="brand">
-          <div className="title">Electramo<span>portaal</span></div>
+          <img src="/logo.png" alt="Electramo" className="logo" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
@@ -86,6 +112,13 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
             </select>
           </div>
           <div>
+            <label>Vermogen</label>
+            <select value={fVermogen} onChange={(e) => setFVermogen(e.target.value)}>
+              <option value="">Alle</option>
+              {vermogenOptions.map((o) => <option key={o} value={o}>{o} kW</option>)}
+            </select>
+          </div>
+          <div>
             <label>Polen</label>
             <select value={fPolen} onChange={(e) => setFPolen(e.target.value)}>
               <option value="">Alle</option>
@@ -99,6 +132,29 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
               {bvormOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
+          <div>
+            <label>Volt</label>
+            <select value={fVolt} onChange={(e) => setFVolt(e.target.value)}>
+              <option value="">Alle</option>
+              {voltOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>IE klasse</label>
+            <select value={fIe} onChange={(e) => setFIe(e.target.value)}>
+              <option value="">Alle</option>
+              {ieOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Materiaal</label>
+            <select value={fMateriaal} onChange={(e) => setFMateriaal(e.target.value)}>
+              <option value="">Alle</option>
+              {materiaalOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
               type="checkbox" id="onlyStock" checked={onlyStock}
@@ -107,7 +163,15 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
             />
             <label htmlFor="onlyStock" style={{ textTransform: 'none', fontWeight: 600 }}>Alleen op voorraad</label>
           </div>
-          <button className="btn" onClick={() => { setSearch(''); setFBouw(''); setFPolen(''); setFBvorm(''); setOnlyStock(false); }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="checkbox" id="onlyFlens" checked={onlyFlens}
+              onChange={(e) => setOnlyFlens(e.target.checked)}
+              style={{ width: 16, height: 16 }}
+            />
+            <label htmlFor="onlyFlens" style={{ textTransform: 'none', fontWeight: 600 }}>Alleen flenzen</label>
+          </div>
+          <button className="btn" onClick={resetFilters}>
             Wis filters
           </button>
         </div>
@@ -117,7 +181,7 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
         <b style={{ color: 'var(--ink)' }}>{filtered.length}</b> artikelen gevonden
       </div>
 
-      <div className="panel" style={{ padding: 0, overflow: 'auto', maxHeight: '70vh' }}>
+      <div className="panel tablewrap">
         <table>
           <thead>
             <tr>
@@ -128,6 +192,8 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
               <th>Polen</th>
               <th>Bouwvorm</th>
               <th>Volt</th>
+              <th>IE klasse</th>
+              <th>Materiaal</th>
               <th style={{ textAlign: 'right' }}>Vrije voorraad</th>
               <th style={{ textAlign: 'right' }}>Inkomend</th>
             </tr>
@@ -142,6 +208,8 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
                 <td>{p.polen ? `${p.polen}-polig` : '—'}</td>
                 <td>{p.bouwvorm || '—'}</td>
                 <td>{p.volt || '—'}</td>
+                <td>{p.ie_klasse || '—'}</td>
+                <td>{p.materiaal || '—'}</td>
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
                 <td style={{ textAlign: 'right' }}>{p.inkomend}</td>
               </tr>
