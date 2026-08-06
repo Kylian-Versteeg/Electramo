@@ -36,21 +36,29 @@ export async function POST(request) {
   }
   const existingCodes = new Set(existing.map((r) => r.code));
 
-  const toUpdate = items.filter((it) => existingCodes.has(it.code));
+  const toUpdate = items
+    .filter((it) => existingCodes.has(it.code))
+    .map((it) => ({
+      code: it.code,
+      vrije_voorraad: it.vrije_voorraad,
+      inkomend: it.inkomend,
+      updated_at: new Date().toISOString(),
+    }));
   const ignoredCount = items.length - toUpdate.length;
 
-  // 4. Werk per artikel alleen vrije_voorraad en inkomend bij.
+  // 4. Werk alle artikelen in EEN keer bij (bulk upsert i.p.v. 813 losse calls).
+  //    Alleen de kolommen code/vrije_voorraad/inkomend/updated_at worden aangeraakt;
+  //    alle andere gegevens (omschrijving, motorgegevens, etc.) blijven ongewijzigd.
   let updatedCount = 0;
-  for (const it of toUpdate) {
-    const { error } = await admin
+  if (toUpdate.length > 0) {
+    const { error: upsertError, count } = await admin
       .from('products')
-      .update({
-        vrije_voorraad: it.vrije_voorraad,
-        inkomend: it.inkomend,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('code', it.code);
-    if (!error) updatedCount += 1;
+      .upsert(toUpdate, { onConflict: 'code', count: 'exact' });
+
+    if (upsertError) {
+      return NextResponse.json({ error: upsertError.message }, { status: 500 });
+    }
+    updatedCount = count ?? toUpdate.length;
   }
 
   return NextResponse.json({
