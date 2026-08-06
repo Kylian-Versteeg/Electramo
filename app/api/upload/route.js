@@ -46,7 +46,7 @@ export async function POST(request) {
     }));
   const ignoredCount = items.length - toUpdate.length;
 
-  // 4. Werk alle artikelen in EEN keer bij (bulk upsert i.p.v. 813 losse calls).
+  // 4. Werk alle artikelen in EEN keer bij (bulk upsert i.p.v. losse calls).
   //    Alleen de kolommen code/vrije_voorraad/inkomend/updated_at worden aangeraakt;
   //    alle andere gegevens (omschrijving, motorgegevens, etc.) blijven ongewijzigd.
   let updatedCount = 0;
