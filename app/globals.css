@@ -33,9 +33,7 @@ header {
   padding-bottom: 14px; margin-bottom: 22px; flex-wrap: wrap; gap: 10px;
 }
 header .brand { display: flex; align-items: center; gap: 16px; }
-header .brand img { height: 34px; width: auto; }
-header .title { font-size: 26px; font-weight: 700; }
-header .title span { color: var(--accent); }
+header .brand .logo { height: 34px; width: auto; display: block; }
 
 .panel {
   background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
@@ -49,20 +47,24 @@ header .title span { color: var(--accent); }
 .btn:hover { background: var(--steel); }
 .btn.accent { background: var(--accent); }
 
-input[type="email"], input[type="password"], input[type="text"] {
+input[type="email"], input[type="password"], input[type="text"], select {
   border: 1px solid var(--line); border-radius: 7px; padding: 9px 12px;
-  font-size: 14px; width: 100%;
+  font-size: 14px; width: 100%; font-family: var(--sans); background: #fff;
 }
 
-label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--steel); }
+label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--steel); display: block; margin-bottom: 6px; }
 
 .error { color: #b3401f; font-size: 13px; margin-top: 8px; }
 .ok-msg { color: var(--ok); font-size: 13px; margin-top: 8px; }
 
+/* ---- tabel met vaste (sticky) kolomkoppen ---- */
+.tablewrap { padding: 0; overflow: auto; max-height: 70vh; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead th {
+  position: sticky; top: 0; z-index: 2;
   background: var(--ink); color: #fff; text-align: left; padding: 8px 10px;
-  font-size: 11px; text-transform: uppercase;
+  font-size: 11px; text-transform: uppercase; white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(0,0,0,.15);
 }
 tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
 tbody tr:hover { background: #f5f8fa; }
