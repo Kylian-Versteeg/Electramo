@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabaseClient';
 
 const FLENS_PREFIXES = ['MB', 'SB', 'TCB', 'JB', 'TAB'];
+const IE_ORDER = ['IE1', 'IE2', 'IE3', 'IE4'];
 
 function isFlens(code) {
   return FLENS_PREFIXES.some((p) => (code || '').startsWith(p));
@@ -17,10 +18,36 @@ function stockFlag(v) {
   return <span className="flag flag-zero">{v}</span>;
 }
 
-function uniqSorted(arr) {
-  return [...new Set(arr.filter((v) => v !== null && v !== undefined && v !== ''))].sort((a, b) =>
-    String(a).localeCompare(String(b), undefined, { numeric: true })
-  );
+// Polen: enkele cijfers (2, 4, 6...) eerst oplopend, daarna combinaties (2/4, 4/6...) oplopend.
+function poleSortValue(p) {
+  if (!p) return -1;
+  if (p.includes('/')) {
+    const [a, b] = p.split('/').map(Number);
+    return 1000 + a * 100 + b;
+  }
+  return parseInt(p, 10) || 0;
+}
+
+// IE klasse: IE1, IE2, IE3, IE4 eerst in die volgorde, daarna de rest alfabetisch.
+function ieSortValue(v) {
+  const idx = IE_ORDER.indexOf(v);
+  return idx === -1 ? [1, v] : [0, idx];
+}
+
+function sortValues(field, arr) {
+  const unique = [...new Set(arr.filter((v) => v !== null && v !== undefined && v !== ''))];
+  if (field === 'polen') {
+    return unique.sort((a, b) => poleSortValue(a) - poleSortValue(b));
+  }
+  if (field === 'ie_klasse') {
+    return unique.sort((a, b) => {
+      const [ga, ia] = ieSortValue(a);
+      const [gb, ib] = ieSortValue(b);
+      if (ga !== gb) return ga - gb;
+      return ga === 0 ? ia - ib : String(ia).localeCompare(String(ib), undefined, { numeric: true });
+    });
+  }
+  return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
 export default function VoorraadApp({ initialProducts, loadError, userEmail, isAdmin }) {
@@ -38,30 +65,45 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
 
   const products = initialProducts;
 
-  const bouwOptions = useMemo(() => uniqSorted(products.map((p) => p.bouwgrootte)), [products]);
-  const polenOptions = useMemo(() => uniqSorted(products.map((p) => p.polen)), [products]);
-  const bvormOptions = useMemo(() => uniqSorted(products.map((p) => p.bouwvorm)), [products]);
-  const vermogenOptions = useMemo(() => uniqSorted(products.map((p) => p.vermogen)), [products]);
-  const voltOptions = useMemo(() => uniqSorted(products.map((p) => p.volt)), [products]);
-  const ieOptions = useMemo(() => uniqSorted(products.map((p) => p.ie_klasse)), [products]);
-  const materiaalOptions = useMemo(() => uniqSorted(products.map((p) => p.materiaal)), [products]);
-
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
+  // Past alle actieve filters toe, BEHALVE de opgegeven ("except"). Zo tonen de opties van
+  // elk dropdownmenu alleen waarden die, samen met de rest van je huidige selectie, ook
+  // daadwerkelijk resultaat opleveren.
+  function matchingExcept(except) {
     return products.filter((p) => {
-      if (s && !((p.code || '').toLowerCase().includes(s) || (p.omschrijving || '').toLowerCase().includes(s))) return false;
-      if (fBouw && p.bouwgrootte !== fBouw) return false;
-      if (fPolen && p.polen !== fPolen) return false;
-      if (fBvorm && p.bouwvorm !== fBvorm) return false;
-      if (fVermogen && p.vermogen !== fVermogen) return false;
-      if (fVolt && p.volt !== fVolt) return false;
-      if (fIe && p.ie_klasse !== fIe) return false;
-      if (fMateriaal && p.materiaal !== fMateriaal) return false;
+      if (except !== 'search' && search) {
+        const s = search.trim().toLowerCase();
+        if (s && !((p.code || '').toLowerCase().includes(s) || (p.omschrijving || '').toLowerCase().includes(s))) return false;
+      }
+      if (except !== 'bouwgrootte' && fBouw && p.bouwgrootte !== fBouw) return false;
+      if (except !== 'polen' && fPolen && p.polen !== fPolen) return false;
+      if (except !== 'bouwvorm' && fBvorm && p.bouwvorm !== fBvorm) return false;
+      if (except !== 'vermogen' && fVermogen && p.vermogen !== fVermogen) return false;
+      if (except !== 'volt' && fVolt && p.volt !== fVolt) return false;
+      if (except !== 'ie_klasse' && fIe && p.ie_klasse !== fIe) return false;
+      if (except !== 'materiaal' && fMateriaal && p.materiaal !== fMateriaal) return false;
       if (onlyStock && !(p.vrije_voorraad > 0)) return false;
       if (onlyFlens && !isFlens(p.code)) return false;
       return true;
     });
-  }, [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  }
+
+  const bouwOptions = useMemo(() => sortValues('bouwgrootte', matchingExcept('bouwgrootte').map((p) => p.bouwgrootte)),
+    [products, search, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const polenOptions = useMemo(() => sortValues('polen', matchingExcept('polen').map((p) => p.polen)),
+    [products, search, fBouw, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const bvormOptions = useMemo(() => sortValues('bouwvorm', matchingExcept('bouwvorm').map((p) => p.bouwvorm)),
+    [products, search, fBouw, fPolen, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const vermogenOptions = useMemo(() => sortValues('vermogen', matchingExcept('vermogen').map((p) => p.vermogen)),
+    [products, search, fBouw, fPolen, fBvorm, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const voltOptions = useMemo(() => sortValues('volt', matchingExcept('volt').map((p) => p.volt)),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const ieOptions = useMemo(() => sortValues('ie_klasse', matchingExcept('ie_klasse').map((p) => p.ie_klasse)),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fMateriaal, onlyStock, onlyFlens]);
+  const materiaalOptions = useMemo(() => sortValues('materiaal', matchingExcept('materiaal').map((p) => p.materiaal)),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, onlyStock, onlyFlens]);
+
+  const filtered = useMemo(() => matchingExcept(null),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
 
   async function handleLogout() {
     const supabase = createClient();
