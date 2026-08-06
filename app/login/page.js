@@ -29,8 +29,8 @@ export default function LoginPage() {
   return (
     <div className="wrap">
       <div className="login-box">
-        <div style={{ textAlign: 'center', marginBottom: 24, fontSize: 22, fontWeight: 700 }}>
-          Electramo<span style={{ color: 'var(--accent)' }}>portaal</span>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <img src="/logo.png" alt="Electramo" style={{ height: 32, width: 'auto' }} />
         </div>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 14 }}>
