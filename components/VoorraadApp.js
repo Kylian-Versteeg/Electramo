@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabaseClient';
+import { LOGO_DATA_URI } from '../lib/logo';
 
 const FLENS_PREFIXES = ['MB', 'SB', 'TCB', 'JB', 'TAB'];
 const IE_ORDER = ['IE1', 'IE2', 'IE3', 'IE4'];
@@ -50,7 +51,7 @@ function sortValues(field, arr) {
   return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
-export default function VoorraadApp({ initialProducts, loadError, userEmail, isAdmin }) {
+export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin }) {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [fBouw, setFBouw] = useState('');
@@ -122,7 +123,7 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
     <div className="wrap">
       <header>
         <div className="brand">
-          <span style={{ fontSize: 40, fontWeight: 1200, color: '#10206c', letterSpacing: '0.5px' }}>ELECTRAMO</span>
+          <img src={LOGO_DATA_URI} alt="Electramo" style={{ height: 34, width: 'auto', display: 'block' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
@@ -135,6 +136,11 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
 
       {loadError && (
         <div className="panel error">Kon de voorraad niet laden: {loadError}</div>
+      )}
+      {odooNotice && (
+        <div className="panel" style={{ borderColor: '#f0c36d', background: '#fbf3de', color: '#8a6d1f', fontSize: 13 }}>
+          {odooNotice}
+        </div>
       )}
 
       <div className="panel">
