@@ -122,7 +122,7 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
     <div className="wrap">
       <header>
         <div className="brand">
-          <span style={{ fontSize: 20, fontWeight: 600, color: '#10206c', letterSpacing: '0.5px' }}>ELECTRAMO</span>
+          <span style={{ fontSize: 40, fontWeight: 1200, color: '#10206c', letterSpacing: '0.5px' }}>ELECTRAMO</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
