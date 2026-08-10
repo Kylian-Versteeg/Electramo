@@ -31,7 +31,7 @@ export default function LoginPage() {
     <div className="wrap">
       <div className="login-box">
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <img src={LOGO_DATA_URI} alt="Electramo" style={{ height: 40, width: 'auto' }} />
+          <img src={LOGO_DATA_URI} alt="Electramo" style={{ height: 30, width: 'auto', maxWidth: '100%', display: 'block', margin: '0 auto' }} />
         </div>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 14 }}>
