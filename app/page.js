@@ -1,5 +1,4 @@
 import { createServerSupabase } from '../lib/supabaseServer';
-import { fetchOdooStock } from '../lib/odoo';
 import VoorraadApp from '../components/VoorraadApp';
 
 export const dynamic = 'force-dynamic'; // altijd verse data, geen caching
@@ -14,19 +13,6 @@ export default async function HomePage() {
     .order('code', { ascending: true });
 
   let liveProducts = products || [];
-  let odooNotice = null;
-
-  try {
-    const stockMap = await fetchOdooStock(liveProducts.map((p) => p.code));
-    if (stockMap) {
-      liveProducts = liveProducts.map((p) =>
-        stockMap[p.code] ? { ...p, ...stockMap[p.code] } : p
-      );
-    }
-  } catch (err) {
-    console.error('Kon voorraad niet ophalen bij Odoo:', err.message);
-    odooNotice = 'Kon geen live voorraad ophalen bij Odoo - de laatst bekende aantallen worden getoond.';
-  }
 
   // --- Prijzen: bruto/netto per product o.b.v. het klantaccount ---
   // De klanten/kortingen-tabellen hebben Row Level Security aan: met de
@@ -75,7 +61,7 @@ export default async function HomePage() {
     <VoorraadApp
       initialProducts={liveProducts}
       loadError={error ? error.message : null}
-      odooNotice={odooNotice}
+      odooNotice={null}
       userEmail={user?.email || ''}
       isAdmin={isAdmin}
       toontPrijzen={!!klant}
