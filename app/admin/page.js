@@ -20,7 +20,10 @@ export default async function AdminPage() {
     <div className="wrap">
       <header>
         <div className="title">Electramo<span>portaal</span> — Beheer</div>
-        <a href="/" className="btn">&larr; Terug naar voorraadlijst</a>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <a href="/admin/klanten" className="btn accent">Klanten beheren</a>
+          <a href="/" className="btn">&larr; Terug naar voorraadlijst</a>
+        </div>
       </header>
       <AdminUpload />
     </div>
