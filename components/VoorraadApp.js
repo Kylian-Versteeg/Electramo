@@ -12,6 +12,11 @@ function isFlens(code) {
   return FLENS_PREFIXES.some((p) => (code || '').startsWith(p));
 }
 
+function fmtPrijs(v) {
+  if (v === null || v === undefined) return 'Op aanvraag';
+  return '€ ' + v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function stockFlag(v) {
   if (v === 0) return <span className="flag flag-zero">0</span>;
   if (v > 0 && v <= 3) return <span className="flag flag-low">{v}</span>;
@@ -51,7 +56,7 @@ function sortValues(field, arr) {
   return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
-export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin }) {
+export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen }) {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [fBouw, setFBouw] = useState('');
@@ -244,6 +249,8 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
               <th>Materiaal</th>
               <th style={{ textAlign: 'right' }}>Vrije voorraad</th>
               <th style={{ textAlign: 'right' }}>Inkomend</th>
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>Bruto</th>}
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>Netto</th>}
             </tr>
           </thead>
           <tbody>
@@ -260,6 +267,8 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
                 <td>{p.materiaal || '—'}</td>
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
                 <td style={{ textAlign: 'right' }}>{p.inkomend}</td>
+                {toontPrijzen && <td style={{ textAlign: 'right' }}>{fmtPrijs(p.prijs_bruto)}</td>}
+                {toontPrijzen && <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtPrijs(p.prijs_netto)}</td>}
               </tr>
             ))}
           </tbody>
