@@ -13,7 +13,7 @@ function isFlens(code) {
 }
 
 function fmtPrijs(v) {
-  if (v === null || v === undefined) return 'Op aanvraag';
+  if (v === null || v === undefined) return 'R.F.Q.';
   return '€ ' + v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
@@ -237,8 +237,6 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
       <div className="panel tablewrap">
         <table>
           <colgroup>
-            {toontPrijzen && <col style={{ width: '8%' }} />}
-            {toontPrijzen && <col style={{ width: '8%' }} />}
             <col style={{ width: toontPrijzen ? '11%' : '12%' }} />
             <col style={{ width: toontPrijzen ? '13%' : '18%' }} />
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
@@ -250,11 +248,11 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
             <col style={{ width: toontPrijzen ? '7%' : '9%' }} />
             <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
+            {toontPrijzen && <col style={{ width: '8%' }} />}
+            {toontPrijzen && <col style={{ width: '8%' }} />}
           </colgroup>
           <thead>
             <tr>
-              {toontPrijzen && <th style={{ textAlign: 'right' }}>Bruto</th>}
-              {toontPrijzen && <th style={{ textAlign: 'right' }}>Netto</th>}
               <th>Artikelcode</th>
               <th>Omschrijving</th>
               <th>Bouwgrootte</th>
@@ -266,13 +264,13 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
               <th>Materiaal</th>
               <th style={{ textAlign: 'right' }}>Vrije voorraad</th>
               <th style={{ textAlign: 'right' }}>Inkomend</th>
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>Bruto</th>}
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>Netto</th>}
             </tr>
           </thead>
           <tbody>
             {filtered.map((p) => (
               <tr key={p.code}>
-                {toontPrijzen && <td style={{ textAlign: 'right' }}>{fmtPrijs(p.prijs_bruto)}</td>}
-                {toontPrijzen && <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtPrijs(p.prijs_netto)}</td>}
                 <td style={{ fontFamily: 'var(--mono)', fontWeight: 600 }}>{p.code}</td>
                 <td>{p.omschrijving || '—'}</td>
                 <td>{p.bouwgrootte || '—'}</td>
@@ -284,6 +282,8 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
                 <td>{p.materiaal || '—'}</td>
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
                 <td style={{ textAlign: 'right' }}>{p.inkomend}</td>
+                {toontPrijzen && <td style={{ textAlign: 'right' }}>{fmtPrijs(p.prijs_bruto)}</td>}
+                {toontPrijzen && <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtPrijs(p.prijs_netto)}</td>}
               </tr>
             ))}
           </tbody>
