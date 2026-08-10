@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabaseClient';
+import { LOGO_DATA_URI } from '../../lib/logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function LoginPage() {
     <div className="wrap">
       <div className="login-box">
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <span style={{ fontSize: 40, fontWeight: 1200, color: '#10206c', letterSpacing: '0.5px' }}>ELECTRAMO</span>
+          <img src={LOGO_DATA_URI} alt="Electramo" style={{ height: 40, width: 'auto' }} />
         </div>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 14 }}>
