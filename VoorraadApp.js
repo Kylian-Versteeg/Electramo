@@ -3,11 +3,29 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabaseClient';
+import { LOGO_DATA_URI } from '../lib/logo';
 
-const FLENS_PREFIXES = ['MB', 'SB', 'TCB', 'JB', 'TAB'];
+// Standaard-sortering: deze prefixen bovenaan, in deze volgorde. De rest erachteraan
+// (in de volgorde waarin ze uit de database komen).
+const PREFIX_VOLGORDE = ['3M', '3E', '4E', '3XE'];
+function prefixPrioriteit(code) {
+  for (let i = 0; i < PREFIX_VOLGORDE.length; i++) {
+    if ((code || '').startsWith(PREFIX_VOLGORDE[i])) return i;
+  }
+  return PREFIX_VOLGORDE.length;
+}
+const IE_ORDER = ['IE1', 'IE2', 'IE3', 'IE4'];
 
-function isFlens(code) {
-  return FLENS_PREFIXES.some((p) => (code || '').startsWith(p));
+// Gebruikt de al-bepaalde prijscategorie ("flenzen") i.p.v. een beperkte lijst met
+// artikelcode-voorvoegsels - zo worden ALLE flenzen herkend, ongeacht hun codeformaat
+// (bijv. ook YB5O-200, die niet in het oude lijstje met voorvoegsels stond).
+function isFlens(p) {
+  return p.categorie === 'flenzen';
+}
+
+function fmtPrijs(v) {
+  if (v === null || v === undefined) return 'R.F.Q.';
+  return '€ ' + v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function stockFlag(v) {
@@ -17,13 +35,39 @@ function stockFlag(v) {
   return <span className="flag flag-zero">{v}</span>;
 }
 
-function uniqSorted(arr) {
-  return [...new Set(arr.filter((v) => v !== null && v !== undefined && v !== ''))].sort((a, b) =>
-    String(a).localeCompare(String(b), undefined, { numeric: true })
-  );
+// Polen: enkele cijfers (2, 4, 6...) eerst oplopend, daarna combinaties (2/4, 4/6...) oplopend.
+function poleSortValue(p) {
+  if (!p) return -1;
+  if (p.includes('/')) {
+    const [a, b] = p.split('/').map(Number);
+    return 1000 + a * 100 + b;
+  }
+  return parseInt(p, 10) || 0;
 }
 
-export default function VoorraadApp({ initialProducts, loadError, userEmail, isAdmin }) {
+// IE klasse: IE1, IE2, IE3, IE4 eerst in die volgorde, daarna de rest alfabetisch.
+function ieSortValue(v) {
+  const idx = IE_ORDER.indexOf(v);
+  return idx === -1 ? [1, v] : [0, idx];
+}
+
+function sortValues(field, arr) {
+  const unique = [...new Set(arr.filter((v) => v !== null && v !== undefined && v !== ''))];
+  if (field === 'polen') {
+    return unique.sort((a, b) => poleSortValue(a) - poleSortValue(b));
+  }
+  if (field === 'ie_klasse') {
+    return unique.sort((a, b) => {
+      const [ga, ia] = ieSortValue(a);
+      const [gb, ib] = ieSortValue(b);
+      if (ga !== gb) return ga - gb;
+      return ga === 0 ? ia - ib : String(ia).localeCompare(String(ib), undefined, { numeric: true });
+    });
+  }
+  return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+}
+
+export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen }) {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [fBouw, setFBouw] = useState('');
@@ -36,32 +80,50 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
   const [onlyStock, setOnlyStock] = useState(false);
   const [onlyFlens, setOnlyFlens] = useState(false);
 
-  const products = initialProducts;
+  const products = useMemo(
+    () => [...initialProducts].sort((a, b) => prefixPrioriteit(a.code) - prefixPrioriteit(b.code)),
+    [initialProducts]
+  );
 
-  const bouwOptions = useMemo(() => uniqSorted(products.map((p) => p.bouwgrootte)), [products]);
-  const polenOptions = useMemo(() => uniqSorted(products.map((p) => p.polen)), [products]);
-  const bvormOptions = useMemo(() => uniqSorted(products.map((p) => p.bouwvorm)), [products]);
-  const vermogenOptions = useMemo(() => uniqSorted(products.map((p) => p.vermogen)), [products]);
-  const voltOptions = useMemo(() => uniqSorted(products.map((p) => p.volt)), [products]);
-  const ieOptions = useMemo(() => uniqSorted(products.map((p) => p.ie_klasse)), [products]);
-  const materiaalOptions = useMemo(() => uniqSorted(products.map((p) => p.materiaal)), [products]);
-
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
+  // Past alle actieve filters toe, BEHALVE de opgegeven ("except"). Zo tonen de opties van
+  // elk dropdownmenu alleen waarden die, samen met de rest van je huidige selectie, ook
+  // daadwerkelijk resultaat opleveren.
+  function matchingExcept(except) {
     return products.filter((p) => {
-      if (s && !((p.code || '').toLowerCase().includes(s) || (p.omschrijving || '').toLowerCase().includes(s))) return false;
-      if (fBouw && p.bouwgrootte !== fBouw) return false;
-      if (fPolen && p.polen !== fPolen) return false;
-      if (fBvorm && p.bouwvorm !== fBvorm) return false;
-      if (fVermogen && p.vermogen !== fVermogen) return false;
-      if (fVolt && p.volt !== fVolt) return false;
-      if (fIe && p.ie_klasse !== fIe) return false;
-      if (fMateriaal && p.materiaal !== fMateriaal) return false;
+      if (except !== 'search' && search) {
+        const s = search.trim().toLowerCase();
+        if (s && !((p.code || '').toLowerCase().includes(s) || (p.omschrijving || '').toLowerCase().includes(s))) return false;
+      }
+      if (except !== 'bouwgrootte' && fBouw && p.bouwgrootte !== fBouw) return false;
+      if (except !== 'polen' && fPolen && p.polen !== fPolen) return false;
+      if (except !== 'bouwvorm' && fBvorm && p.bouwvorm !== fBvorm) return false;
+      if (except !== 'vermogen' && fVermogen && p.vermogen !== fVermogen) return false;
+      if (except !== 'volt' && fVolt && p.volt !== fVolt) return false;
+      if (except !== 'ie_klasse' && fIe && p.ie_klasse !== fIe) return false;
+      if (except !== 'materiaal' && fMateriaal && p.materiaal !== fMateriaal) return false;
       if (onlyStock && !(p.vrije_voorraad > 0)) return false;
-      if (onlyFlens && !isFlens(p.code)) return false;
+      if (onlyFlens && !isFlens(p)) return false;
       return true;
     });
-  }, [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  }
+
+  const bouwOptions = useMemo(() => sortValues('bouwgrootte', matchingExcept('bouwgrootte').map((p) => p.bouwgrootte)),
+    [products, search, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const polenOptions = useMemo(() => sortValues('polen', matchingExcept('polen').map((p) => p.polen)),
+    [products, search, fBouw, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const bvormOptions = useMemo(() => sortValues('bouwvorm', matchingExcept('bouwvorm').map((p) => p.bouwvorm)),
+    [products, search, fBouw, fPolen, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const vermogenOptions = useMemo(() => sortValues('vermogen', matchingExcept('vermogen').map((p) => p.vermogen)),
+    [products, search, fBouw, fPolen, fBvorm, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const voltOptions = useMemo(() => sortValues('volt', matchingExcept('volt').map((p) => p.volt)),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const ieOptions = useMemo(() => sortValues('ie_klasse', matchingExcept('ie_klasse').map((p) => p.ie_klasse)),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fMateriaal, onlyStock, onlyFlens]);
+  const materiaalOptions = useMemo(() => sortValues('materiaal', matchingExcept('materiaal').map((p) => p.materiaal)),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, onlyStock, onlyFlens]);
+
+  const filtered = useMemo(() => matchingExcept(null),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -76,11 +138,24 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
     setOnlyStock(false); setOnlyFlens(false);
   }
 
+  const actieveFilters = [
+    search && { label: `Zoeken: "${search}"`, clear: () => setSearch('') },
+    fBouw && { label: `Bouwgrootte: ${fBouw}`, clear: () => setFBouw('') },
+    fVermogen && { label: `Vermogen: ${fVermogen} kW`, clear: () => setFVermogen('') },
+    fPolen && { label: `Polen: ${fPolen}-polig`, clear: () => setFPolen('') },
+    fBvorm && { label: `Bouwvorm: ${fBvorm}`, clear: () => setFBvorm('') },
+    fVolt && { label: `Volt: ${fVolt}`, clear: () => setFVolt('') },
+    fIe && { label: `IE klasse: ${fIe}`, clear: () => setFIe('') },
+    fMateriaal && { label: `Materiaal: ${fMateriaal}`, clear: () => setFMateriaal('') },
+    onlyStock && { label: 'Alleen op voorraad', clear: () => setOnlyStock(false) },
+    onlyFlens && { label: 'Alleen flenzen', clear: () => setOnlyFlens(false) },
+  ].filter(Boolean);
+
   return (
-    <div className="wrap">
+    <div className="wrap wrap-breed">
       <header>
         <div className="brand">
-          <img src="/logo.png" alt="Electramo" className="logo" />
+          <img src={LOGO_DATA_URI} alt="Electramo" style={{ height: 44, width: 'auto', display: 'block' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
@@ -93,6 +168,11 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
 
       {loadError && (
         <div className="panel error">Kon de voorraad niet laden: {loadError}</div>
+      )}
+      {odooNotice && (
+        <div className="panel" style={{ borderColor: '#f0c36d', background: '#fbf3de', color: '#8a6d1f', fontSize: 13 }}>
+          {odooNotice}
+        </div>
       )}
 
       <div className="panel">
@@ -177,12 +257,40 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
         </div>
       </div>
 
+      {actieveFilters.length > 0 && (
+        <div className="chips">
+          {actieveFilters.map((f, i) => (
+            <button key={i} type="button" className="chip" onClick={f.clear}>
+              {f.label} <span className="chip-x">&times;</span>
+            </button>
+          ))}
+          <button type="button" className="chip chip-clear-all" onClick={resetFilters}>
+            Alles wissen
+          </button>
+        </div>
+      )}
+
       <div style={{ marginBottom: 10, fontSize: 13, color: 'var(--steel)' }}>
         <b style={{ color: 'var(--ink)' }}>{filtered.length}</b> artikelen gevonden
       </div>
 
       <div className="panel tablewrap">
         <table>
+          <colgroup>
+            <col style={{ width: toontPrijzen ? '11%' : '12%' }} />
+            <col style={{ width: toontPrijzen ? '13%' : '18%' }} />
+            <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
+            <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
+            <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
+            <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
+            <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
+            <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
+            <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
+            <col style={{ width: toontPrijzen ? '7%' : '9%' }} />
+            <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
+            {toontPrijzen && <col style={{ width: '8%' }} />}
+            {toontPrijzen && <col style={{ width: '8%' }} />}
+          </colgroup>
           <thead>
             <tr>
               <th>Artikelcode</th>
@@ -196,6 +304,8 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
               <th>Materiaal</th>
               <th style={{ textAlign: 'right' }}>Vrije voorraad</th>
               <th style={{ textAlign: 'right' }}>Inkomend</th>
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>Bruto</th>}
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>Netto</th>}
             </tr>
           </thead>
           <tbody>
@@ -212,6 +322,8 @@ export default function VoorraadApp({ initialProducts, loadError, userEmail, isA
                 <td>{p.materiaal || '—'}</td>
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
                 <td style={{ textAlign: 'right' }}>{p.inkomend}</td>
+                {toontPrijzen && <td style={{ textAlign: 'right' }}>{fmtPrijs(p.prijs_bruto)}</td>}
+                {toontPrijzen && <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtPrijs(p.prijs_netto)}</td>}
               </tr>
             ))}
           </tbody>
