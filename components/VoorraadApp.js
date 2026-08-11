@@ -137,6 +137,19 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
     setOnlyStock(false); setOnlyFlens(false);
   }
 
+  const actieveFilters = [
+    search && { label: `Zoeken: "${search}"`, clear: () => setSearch('') },
+    fBouw && { label: `Bouwgrootte: ${fBouw}`, clear: () => setFBouw('') },
+    fVermogen && { label: `Vermogen: ${fVermogen} kW`, clear: () => setFVermogen('') },
+    fPolen && { label: `Polen: ${fPolen}-polig`, clear: () => setFPolen('') },
+    fBvorm && { label: `Bouwvorm: ${fBvorm}`, clear: () => setFBvorm('') },
+    fVolt && { label: `Volt: ${fVolt}`, clear: () => setFVolt('') },
+    fIe && { label: `IE klasse: ${fIe}`, clear: () => setFIe('') },
+    fMateriaal && { label: `Materiaal: ${fMateriaal}`, clear: () => setFMateriaal('') },
+    onlyStock && { label: 'Alleen op voorraad', clear: () => setOnlyStock(false) },
+    onlyFlens && { label: 'Alleen flenzen', clear: () => setOnlyFlens(false) },
+  ].filter(Boolean);
+
   return (
     <div className="wrap wrap-breed">
       <header>
@@ -242,6 +255,19 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
           </button>
         </div>
       </div>
+
+      {actieveFilters.length > 0 && (
+        <div className="chips">
+          {actieveFilters.map((f, i) => (
+            <button key={i} type="button" className="chip" onClick={f.clear}>
+              {f.label} <span className="chip-x">&times;</span>
+            </button>
+          ))}
+          <button type="button" className="chip chip-clear-all" onClick={resetFilters}>
+            Alles wissen
+          </button>
+        </div>
+      )}
 
       <div style={{ marginBottom: 10, fontSize: 13, color: 'var(--steel)' }}>
         <b style={{ color: 'var(--ink)' }}>{filtered.length}</b> artikelen gevonden
