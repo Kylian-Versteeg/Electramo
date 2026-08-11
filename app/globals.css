@@ -56,6 +56,18 @@ input[type="email"], input[type="password"], input[type="text"], select {
 label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--steel); display: block; margin-bottom: 6px; }
 
 .error { color: #b3401f; font-size: 13px; margin-top: 8px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff; border: 1px solid var(--line); border-radius: 20px;
+  padding: 6px 12px; font-size: 12.5px; color: var(--ink); cursor: pointer;
+  font-weight: 500;
+}
+.chip:hover { background: #f5f8fa; border-color: var(--steel-light); }
+.chip-x { color: var(--steel-light); font-size: 15px; line-height: 1; }
+.chip-clear-all { background: var(--bg); color: var(--steel); font-weight: 600; }
+.chip-clear-all:hover { background: #e5e9ec; }
 .ok-msg { color: var(--ok); font-size: 13px; margin-top: 8px; }
 
 /* ---- tabel met vaste (sticky) kolomkoppen, geen horizontale scroll ---- */
