@@ -6,6 +6,16 @@ import { createClient } from '../lib/supabaseClient';
 import { LOGO_DATA_URI } from '../lib/logo';
 
 const FLENS_PREFIXES = ['MB', 'SB', 'TCB', 'JB', 'TAB'];
+
+// Standaard-sortering: deze prefixen bovenaan, in deze volgorde. De rest erachteraan
+// (in de volgorde waarin ze uit de database komen).
+const PREFIX_VOLGORDE = ['3M', '3E', '4E', '3XE'];
+function prefixPrioriteit(code) {
+  for (let i = 0; i < PREFIX_VOLGORDE.length; i++) {
+    if ((code || '').startsWith(PREFIX_VOLGORDE[i])) return i;
+  }
+  return PREFIX_VOLGORDE.length;
+}
 const IE_ORDER = ['IE1', 'IE2', 'IE3', 'IE4'];
 
 function isFlens(code) {
@@ -69,7 +79,10 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
   const [onlyStock, setOnlyStock] = useState(false);
   const [onlyFlens, setOnlyFlens] = useState(false);
 
-  const products = initialProducts;
+  const products = useMemo(
+    () => [...initialProducts].sort((a, b) => prefixPrioriteit(a.code) - prefixPrioriteit(b.code)),
+    [initialProducts]
+  );
 
   // Past alle actieve filters toe, BEHALVE de opgegeven ("except"). Zo tonen de opties van
   // elk dropdownmenu alleen waarden die, samen met de rest van je huidige selectie, ook
