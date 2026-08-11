@@ -16,9 +16,6 @@ function prefixPrioriteit(code) {
 }
 const IE_ORDER = ['IE1', 'IE2', 'IE3', 'IE4'];
 
-// Gebruikt de al-bepaalde prijscategorie ("flenzen") i.p.v. een beperkte lijst met
-// artikelcode-voorvoegsels - zo worden ALLE flenzen herkend, ongeacht hun codeformaat
-// (bijv. ook YB5O-200, die niet in het oude lijstje met voorvoegsels stond).
 function isFlens(p) {
   return p.categorie === 'flenzen';
 }
@@ -35,7 +32,6 @@ function stockFlag(v) {
   return <span className="flag flag-zero">{v}</span>;
 }
 
-// Polen: enkele cijfers (2, 4, 6...) eerst oplopend, daarna combinaties (2/4, 4/6...) oplopend.
 function poleSortValue(p) {
   if (!p) return -1;
   if (p.includes('/')) {
@@ -45,7 +41,6 @@ function poleSortValue(p) {
   return parseInt(p, 10) || 0;
 }
 
-// IE klasse: IE1, IE2, IE3, IE4 eerst in die volgorde, daarna de rest alfabetisch.
 function ieSortValue(v) {
   const idx = IE_ORDER.indexOf(v);
   return idx === -1 ? [1, v] : [0, idx];
@@ -85,9 +80,6 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
     [initialProducts]
   );
 
-  // Past alle actieve filters toe, BEHALVE de opgegeven ("except"). Zo tonen de opties van
-  // elk dropdownmenu alleen waarden die, samen met de rest van je huidige selectie, ook
-  // daadwerkelijk resultaat opleveren.
   function matchingExcept(except) {
     return products.filter((p) => {
       if (except !== 'search' && search) {
@@ -165,6 +157,16 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
           <button className="btn" onClick={handleLogout}>Uitloggen</button>
         </div>
       </header>
+
+      <div className="panel" style={{ background: '#fffbe6', border: '2px solid #f0c36d', fontSize: 13, fontFamily: 'monospace' }}>
+        <b>TIJDELIJK DIAGNOSEPANEEL (mag je straks weer verwijderen)</b><br/>
+        Totaal producten (products.length): {products.length}<br/>
+        Aantal met categorie === 'flenzen': {products.filter((p) => p.categorie === 'flenzen').length}<br/>
+        MSB14B-100 gevonden in products: {products.some((p) => p.code === 'MSB14B-100') ? 'ja' : 'nee'}<br/>
+        MSB14B-100 categorie-waarde: "{JSON.stringify(products.find((p) => p.code === 'MSB14B-100')?.categorie)}"<br/>
+        onlyFlens staat op: {String(onlyFlens)}<br/>
+        Aantal na alle filters (filtered.length): {filtered.length}
+      </div>
 
       {loadError && (
         <div className="panel error">Kon de voorraad niet laden: {loadError}</div>
