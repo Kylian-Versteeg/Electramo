@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabaseClient';
 import { LOGO_DATA_URI } from '../lib/logo';
 
-const FLENS_PREFIXES = ['MB', 'SB', 'TCB', 'JB', 'TAB'];
-
 // Standaard-sortering: deze prefixen bovenaan, in deze volgorde. De rest erachteraan
 // (in de volgorde waarin ze uit de database komen).
 const PREFIX_VOLGORDE = ['3M', '3E', '4E', '3XE'];
@@ -18,8 +16,8 @@ function prefixPrioriteit(code) {
 }
 const IE_ORDER = ['IE1', 'IE2', 'IE3', 'IE4'];
 
-function isFlens(code) {
-  return FLENS_PREFIXES.some((p) => (code || '').startsWith(p));
+function isFlens(p) {
+  return p.categorie === 'flenzen';
 }
 
 function fmtPrijs(v) {
@@ -34,7 +32,6 @@ function stockFlag(v) {
   return <span className="flag flag-zero">{v}</span>;
 }
 
-// Polen: enkele cijfers (2, 4, 6...) eerst oplopend, daarna combinaties (2/4, 4/6...) oplopend.
 function poleSortValue(p) {
   if (!p) return -1;
   if (p.includes('/')) {
@@ -44,7 +41,6 @@ function poleSortValue(p) {
   return parseInt(p, 10) || 0;
 }
 
-// IE klasse: IE1, IE2, IE3, IE4 eerst in die volgorde, daarna de rest alfabetisch.
 function ieSortValue(v) {
   const idx = IE_ORDER.indexOf(v);
   return idx === -1 ? [1, v] : [0, idx];
@@ -84,9 +80,6 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
     [initialProducts]
   );
 
-  // Past alle actieve filters toe, BEHALVE de opgegeven ("except"). Zo tonen de opties van
-  // elk dropdownmenu alleen waarden die, samen met de rest van je huidige selectie, ook
-  // daadwerkelijk resultaat opleveren.
   function matchingExcept(except) {
     return products.filter((p) => {
       if (except !== 'search' && search) {
@@ -101,7 +94,7 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
       if (except !== 'ie_klasse' && fIe && p.ie_klasse !== fIe) return false;
       if (except !== 'materiaal' && fMateriaal && p.materiaal !== fMateriaal) return false;
       if (onlyStock && !(p.vrije_voorraad > 0)) return false;
-      if (onlyFlens && !isFlens(p.code)) return false;
+      if (onlyFlens && !isFlens(p)) return false;
       return true;
     });
   }
