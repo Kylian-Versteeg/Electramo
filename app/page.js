@@ -40,7 +40,10 @@ export default async function HomePage() {
   }
 
   if (klant) {
-    const prijsVeld = klant.prijslijst === '2023' ? 'prijs_bruto_2023' : 'prijs_bruto_2025';
+    const prijsVeld =
+      klant.prijslijst === '2023' ? 'prijs_bruto_2023' :
+      klant.prijslijst === '2025_b5' ? 'prijs_bruto_2025_b5' :
+      'prijs_bruto_2025';
     const naamplaatActief = !!klant.naamplaat_actief;
     const naamplaatPrijs = naamplaatActief ? Number(klant.naamplaat_prijs) || 0 : 0;
     liveProducts = liveProducts.map((p) => {
