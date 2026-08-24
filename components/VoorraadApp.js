@@ -62,7 +62,7 @@ function sortValues(field, arr) {
   return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
-export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen }) {
+export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs }) {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [fBouw, setFBouw] = useState('');
@@ -265,6 +265,11 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
       <div style={{ marginBottom: 10, fontSize: 13, color: 'var(--steel)' }}>
         <b style={{ color: 'var(--ink)' }}>{filtered.length}</b> artikelen gevonden
       </div>
+      {toontPrijzen && naamplaatActief && naamplaatPrijs !== null && naamplaatPrijs !== undefined && (
+        <div style={{ marginBottom: 10, fontSize: 13, color: 'var(--steel)' }}>
+          Motorprijs is inclusief naamplaat {fmtPrijs(naamplaatPrijs)}
+        </div>
+      )}
 
       <div className="panel tablewrap">
         <table>
