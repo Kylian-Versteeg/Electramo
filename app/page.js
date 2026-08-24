@@ -50,7 +50,8 @@ export default async function HomePage() {
         ? Math.round(bruto * (1 - korting / 100) * 100) / 100
         : null;
       // Naamplaat-toeslag: bovenop de nettoprijs van elk artikel, na de kortingsberekening.
-      if (netto !== null && naamplaatActief) {
+      // Geldt voor alle categorieën, behalve flenzen (die hebben geen naamplaatje).
+      if (netto !== null && naamplaatActief && p.categorie !== 'flenzen') {
         netto = Math.round((netto + naamplaatPrijs) * 100) / 100;
       }
       return { ...p, prijs_bruto: bruto ?? null, prijs_netto: netto, korting_percentage: korting ?? null };
