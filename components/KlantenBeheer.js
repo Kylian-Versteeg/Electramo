@@ -168,3 +168,94 @@ export default function KlantenBeheer() {
                   style={{ marginRight: 6 }}
                 />
                 Naamplaat
+              </label>
+            </div>
+            <div style={{ flex: '0 0 160px' }}>
+              <label>Naamplaat prijs (&euro;)</label>
+              <input
+                type="number" min="0" step="0.01"
+                value={form.naamplaatPrijs}
+                onChange={(e) => setForm((f) => ({ ...f, naamplaatPrijs: e.target.value }))}
+                disabled={!form.naamplaatActief}
+                required={form.naamplaatActief}
+                placeholder="bijv. 7.00"
+              />
+            </div>
+          </div>
+
+          <label style={{ display: 'block', marginBottom: 10 }}>Korting per categorie (%)</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12, marginBottom: 18 }}>
+            {CATEGORIEEN.map((c) => (
+              <div key={c.key}>
+                <label style={{ fontWeight: 400, textTransform: 'none', fontSize: 12.5 }}>{c.label}</label>
+                <input
+                  type="number" min="0" max="100" step="0.1"
+                  value={form.kortingen[c.key] ?? ''}
+                  onChange={(e) => updateKorting(c.key, e.target.value)}
+                  placeholder="leeg = geen prijs"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button type="submit" className="btn accent" disabled={busy}>
+              {busy ? 'Bezig...' : (form.id ? 'Wijzigingen opslaan' : 'Klant toevoegen')}
+            </button>
+            {form.id && (
+              <button type="button" className="btn" onClick={nieuweKlant} disabled={busy}>
+                Annuleren
+              </button>
+            )}
+          </div>
+          {status && (
+            <div className={statusType === 'err' ? 'error' : 'ok-msg'} style={{ marginTop: 10 }}>
+              {status}
+            </div>
+          )}
+        </form>
+      </div>
+
+      <div className="panel">
+        <h2 style={{ marginTop: 0 }}>Bestaande klanten ({klanten.length})</h2>
+        {loading ? (
+          <p>Laden...</p>
+        ) : klanten.length === 0 ? (
+          <p style={{ color: 'var(--steel-light)' }}>Nog geen klanten toegevoegd.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>E-mailadres</th>
+                <th>Naam</th>
+                <th>Prijslijst</th>
+                <th>Categorieën met korting</th>
+                <th>Naamplaat</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {klanten.map((k) => (
+                <tr key={k.id}>
+                  <td>{k.email}</td>
+                  <td>{k.naam || '—'}</td>
+                  <td>{k.prijslijst}</td>
+                  <td>{Object.keys(k.kortingen).length} / {CATEGORIEEN.length}</td>
+                  <td>{k.naamplaat_actief ? `Ja (€ ${k.naamplaat_prijs})` : '—'}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <button type="button" className="btn" onClick={() => bewerkKlant(k)} style={{ marginRight: 6 }}>
+                      Bewerken
+                    </button>
+                    <button type="button" className="btn" onClick={() => verwijderKlant(k)} style={{ background: '#b3401f' }}>
+                      Verwijderen
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
