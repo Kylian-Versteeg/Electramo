@@ -48,8 +48,8 @@ export async function POST(request) {
   if (!email || !prijslijst) {
     return NextResponse.json({ error: 'E-mailadres en prijslijst zijn verplicht.' }, { status: 400 });
   }
-  if (!['2023', '2025'].includes(String(prijslijst))) {
-    return NextResponse.json({ error: 'Prijslijst moet 2023 of 2025 zijn.' }, { status: 400 });
+  if (!['2023', '2025', '2025_b5'].includes(String(prijslijst))) {
+    return NextResponse.json({ error: 'Prijslijst moet 2023, 2025 of 2025_b5 zijn.' }, { status: 400 });
   }
   if (naamplaat_actief && (naamplaat_prijs === null || naamplaat_prijs === undefined || naamplaat_prijs === '' || isNaN(Number(naamplaat_prijs)))) {
     return NextResponse.json({ error: 'Vul een geldige naamplaat-prijs in.' }, { status: 400 });
