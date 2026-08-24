@@ -41,12 +41,18 @@ export default async function HomePage() {
 
   if (klant) {
     const prijsVeld = klant.prijslijst === '2023' ? 'prijs_bruto_2023' : 'prijs_bruto_2025';
+    const naamplaatActief = !!klant.naamplaat_actief;
+    const naamplaatPrijs = naamplaatActief ? Number(klant.naamplaat_prijs) || 0 : 0;
     liveProducts = liveProducts.map((p) => {
       const bruto = p[prijsVeld];
       const korting = p.categorie ? kortingenMap[p.categorie] : undefined;
-      const netto = (bruto !== null && bruto !== undefined && korting !== undefined)
+      let netto = (bruto !== null && bruto !== undefined && korting !== undefined)
         ? Math.round(bruto * (1 - korting / 100) * 100) / 100
         : null;
+      // Naamplaat-toeslag: bovenop de nettoprijs van elk artikel, na de kortingsberekening.
+      if (netto !== null && naamplaatActief) {
+        netto = Math.round((netto + naamplaatPrijs) * 100) / 100;
+      }
       return { ...p, prijs_bruto: bruto ?? null, prijs_netto: netto, korting_percentage: korting ?? null };
     });
   }
