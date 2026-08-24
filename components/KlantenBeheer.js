@@ -9,6 +9,8 @@ const LEEG_FORM = {
   naam: '',
   prijslijst: '2025',
   kortingen: {},
+  naamplaatActief: false,
+  naamplaatPrijs: '',
 };
 
 export default function KlantenBeheer() {
@@ -43,6 +45,8 @@ export default function KlantenBeheer() {
       naam: klant.naam || '',
       prijslijst: klant.prijslijst,
       kortingen: { ...klant.kortingen },
+      naamplaatActief: !!klant.naamplaat_actief,
+      naamplaatPrijs: klant.naamplaat_prijs ?? '',
     });
     setStatus('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -94,6 +98,8 @@ export default function KlantenBeheer() {
           naam: form.naam,
           prijslijst: form.prijslijst,
           kortingen: form.kortingen,
+          naamplaat_actief: form.naamplaatActief,
+          naamplaat_prijs: form.naamplaatActief ? form.naamplaatPrijs : null,
         }),
       });
       const data = await res.json();
@@ -145,77 +151,20 @@ export default function KlantenBeheer() {
             </div>
           </div>
 
-          <label style={{ display: 'block', marginBottom: 10 }}>Korting per categorie (%)</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12, marginBottom: 18 }}>
-            {CATEGORIEEN.map((c) => (
-              <div key={c.key}>
-                <label style={{ fontWeight: 400, textTransform: 'none', fontSize: 12.5 }}>{c.label}</label>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end', marginBottom: 18 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 6 }}>
                 <input
-                  type="number" min="0" max="100" step="0.1"
-                  value={form.kortingen[c.key] ?? ''}
-                  onChange={(e) => updateKorting(c.key, e.target.value)}
-                  placeholder="leeg = geen prijs"
+                  type="checkbox"
+                  checked={form.naamplaatActief}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setForm((f) => ({
+                      ...f,
+                      naamplaatActief: checked,
+                      naamplaatPrijs: checked ? f.naamplaatPrijs : '',
+                    }));
+                  }}
+                  style={{ marginRight: 6 }}
                 />
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <button type="submit" className="btn accent" disabled={busy}>
-              {busy ? 'Bezig...' : (form.id ? 'Wijzigingen opslaan' : 'Klant toevoegen')}
-            </button>
-            {form.id && (
-              <button type="button" className="btn" onClick={nieuweKlant} disabled={busy}>
-                Annuleren
-              </button>
-            )}
-          </div>
-          {status && (
-            <div className={statusType === 'err' ? 'error' : 'ok-msg'} style={{ marginTop: 10 }}>
-              {status}
-            </div>
-          )}
-        </form>
-      </div>
-
-      <div className="panel">
-        <h2 style={{ marginTop: 0 }}>Bestaande klanten ({klanten.length})</h2>
-        {loading ? (
-          <p>Laden...</p>
-        ) : klanten.length === 0 ? (
-          <p style={{ color: 'var(--steel-light)' }}>Nog geen klanten toegevoegd.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>E-mailadres</th>
-                <th>Naam</th>
-                <th>Prijslijst</th>
-                <th>Categorieën met korting</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {klanten.map((k) => (
-                <tr key={k.id}>
-                  <td>{k.email}</td>
-                  <td>{k.naam || '—'}</td>
-                  <td>{k.prijslijst}</td>
-                  <td>{Object.keys(k.kortingen).length} / {CATEGORIEEN.length}</td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    <button type="button" className="btn" onClick={() => bewerkKlant(k)} style={{ marginRight: 6 }}>
-                      Bewerken
-                    </button>
-                    <button type="button" className="btn" onClick={() => verwijderKlant(k)} style={{ background: '#b3401f' }}>
-                      Verwijderen
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
-}
+                Naamplaat
