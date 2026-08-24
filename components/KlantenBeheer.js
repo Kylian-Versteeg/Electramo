@@ -147,6 +147,7 @@ export default function KlantenBeheer() {
               >
                 <option value="2023">2023</option>
                 <option value="2025">2025</option>
+                <option value="2025_b5">2025 (B5/B35/V1 +5%)</option>
               </select>
             </div>
           </div>
