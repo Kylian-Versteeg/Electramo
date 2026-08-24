@@ -43,7 +43,7 @@ export async function POST(request) {
   if (errorResponse) return errorResponse;
 
   const body = await request.json();
-  const { email, naam, prijslijst, kortingen } = body;
+  const { email, naam, prijslijst, kortingen, naamplaat_actief, naamplaat_prijs } = body;
 
   if (!email || !prijslijst) {
     return NextResponse.json({ error: 'E-mailadres en prijslijst zijn verplicht.' }, { status: 400 });
@@ -51,13 +51,22 @@ export async function POST(request) {
   if (!['2023', '2025'].includes(String(prijslijst))) {
     return NextResponse.json({ error: 'Prijslijst moet 2023 of 2025 zijn.' }, { status: 400 });
   }
+  if (naamplaat_actief && (naamplaat_prijs === null || naamplaat_prijs === undefined || naamplaat_prijs === '' || isNaN(Number(naamplaat_prijs)))) {
+    return NextResponse.json({ error: 'Vul een geldige naamplaat-prijs in.' }, { status: 400 });
+  }
 
   const admin = createAdminClient();
 
   const { data: klant, error: upsertErr } = await admin
     .from('klanten')
     .upsert(
-      { email: email.trim().toLowerCase(), naam: naam || null, prijslijst: String(prijslijst) },
+      {
+        email: email.trim().toLowerCase(),
+        naam: naam || null,
+        prijslijst: String(prijslijst),
+        naamplaat_actief: !!naamplaat_actief,
+        naamplaat_prijs: naamplaat_actief ? Number(naamplaat_prijs) : null,
+      },
       { onConflict: 'email' }
     )
     .select()
