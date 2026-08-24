@@ -71,6 +71,8 @@ export default async function HomePage() {
       userEmail={user?.email || ''}
       isAdmin={isAdmin}
       toontPrijzen={!!klant}
+      naamplaatActief={!!klant?.naamplaat_actief}
+      naamplaatPrijs={klant?.naamplaat_actief ? Number(klant.naamplaat_prijs) : null}
     />
   );
 }
