@@ -152,7 +152,10 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
           {isAdmin && (
-            <a href="/admin" className="btn">Beheerder</a>
+            <>
+              <a href="/admin/klanten" className="btn">Klanten</a>
+              <a href="/admin" className="btn">Upload</a>
+            </>
           )}
           <button className="btn" onClick={handleLogout}>Uitloggen</button>
         </div>
