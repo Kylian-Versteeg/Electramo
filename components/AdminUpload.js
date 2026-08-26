@@ -44,10 +44,12 @@ export default function AdminUpload() {
         throw new Error(result.error || 'Upload mislukt.');
       }
 
-      setStatusType('ok');
+      setStatusType(result.ignoredCount > 0 ? 'err' : 'ok');
       setStatus(
         `Bijgewerkt: ${result.updatedCount} van de ${result.totalCodes} artikelen.` +
-        (result.ignoredCount > 0 ? ` ${result.ignoredCount} rij(en) genegeerd (code niet in de vaste lijst).` : '')
+        (result.ignoredCount > 0
+          ? ` ${result.ignoredCount} rij(en) genegeerd (code niet in de vaste lijst): ${result.ignoredCodes.join(', ')}.`
+          : '')
       );
     } catch (err) {
       setStatusType('err');
