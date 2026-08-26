@@ -44,7 +44,10 @@ export async function POST(request) {
       inkomend: it.inkomend,
       updated_at: new Date().toISOString(),
     }));
-  const ignoredCount = items.length - toUpdate.length;
+  const ignoredCodes = items
+    .filter((it) => !existingCodes.has(it.code))
+    .map((it) => it.code);
+  const ignoredCount = ignoredCodes.length;
 
   // 4. Werk alle artikelen in EEN keer bij (bulk upsert i.p.v. losse calls).
   //    Alleen de kolommen code/vrije_voorraad/inkomend/updated_at worden aangeraakt;
@@ -64,6 +67,7 @@ export async function POST(request) {
   return NextResponse.json({
     updatedCount,
     ignoredCount,
+    ignoredCodes,
     totalCodes: existingCodes.size,
   });
 }
