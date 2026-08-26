@@ -20,7 +20,7 @@ export default async function KlantenPage() {
     <div className="wrap">
       <header>
         <div className="title">Electramo<span>portaal</span> — Klanten beheren</div>
-        <a href="/admin" className="btn">&larr; Terug naar beheer</a>
+        <a href="/" className="btn">&larr; Terug naar hoofdmenu</a>
       </header>
       <KlantenBeheer />
     </div>
