@@ -1,12 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
 export default function AdminUpload() {
   const [status, setStatus] = useState('');
   const [statusType, setStatusType] = useState('');
   const [busy, setBusy] = useState(false);
+  const [geschiedenis, setGeschiedenis] = useState([]);
+  const [loadingGeschiedenis, setLoadingGeschiedenis] = useState(true);
+
+  async function laadGeschiedenis() {
+    setLoadingGeschiedenis(true);
+    try {
+      const res = await fetch('/api/upload');
+      const data = await res.json();
+      if (res.ok) setGeschiedenis(data.geschiedenis || []);
+    } catch {
+      // geschiedenis ophalen mag stil falen, is niet kritiek voor de upload zelf
+    } finally {
+      setLoadingGeschiedenis(false);
+    }
+  }
+
+  useEffect(() => { laadGeschiedenis(); }, []);
 
   async function handleFile(e) {
     const file = e.target.files[0];
@@ -44,13 +61,12 @@ export default function AdminUpload() {
         throw new Error(result.error || 'Upload mislukt.');
       }
 
-      setStatusType(result.ignoredCount > 0 ? 'err' : 'ok');
+      setStatusType('ok');
       setStatus(
         `Bijgewerkt: ${result.updatedCount} van de ${result.totalCodes} artikelen.` +
-        (result.ignoredCount > 0
-          ? ` ${result.ignoredCount} rij(en) genegeerd (code niet in de vaste lijst): ${result.ignoredCodes.join(', ')}.`
-          : '')
+        (result.ignoredCount > 0 ? ` ${result.ignoredCount} rij(en) genegeerd (code niet in de vaste lijst).` : '')
       );
+      await laadGeschiedenis();
     } catch (err) {
       setStatusType('err');
       setStatus(err.message || 'Er is iets misgegaan.');
@@ -58,6 +74,13 @@ export default function AdminUpload() {
       setBusy(false);
       e.target.value = '';
     }
+  }
+
+  function fmtDatum(iso) {
+    return new Date(iso).toLocaleString('nl-NL', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
   }
 
   return (
@@ -79,6 +102,34 @@ export default function AdminUpload() {
         Alleen deze twee kolommen worden bijgewerkt voor artikelen die al in de vaste lijst staan —
         er worden nooit nieuwe artikelen toegevoegd.
       </p>
+
+      <h2 style={{ marginTop: 28 }}>Uploadgeschiedenis</h2>
+      {loadingGeschiedenis ? (
+        <p>Laden...</p>
+      ) : geschiedenis.length === 0 ? (
+        <p style={{ color: 'var(--steel-light)' }}>Nog geen uploads geregistreerd.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>Datum &amp; tijd</th>
+              <th>Door</th>
+              <th>Bijgewerkt</th>
+              <th>Genegeerd</th>
+            </tr>
+          </thead>
+          <tbody>
+            {geschiedenis.map((g) => (
+              <tr key={g.id}>
+                <td>{fmtDatum(g.created_at)}</td>
+                <td>{g.user_email}</td>
+                <td>{g.updated_count} / {g.total_codes}</td>
+                <td>{g.ignored_count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
