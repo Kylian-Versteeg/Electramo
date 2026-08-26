@@ -2,24 +2,39 @@ import { NextResponse } from 'next/server';
 import { createServerSupabase } from '../../../lib/supabaseServer';
 import { createAdminClient } from '../../../lib/supabaseAdmin';
 
-export async function POST(request) {
-  // 1. Controleer server-side dat de aanvrager echt is ingelogd EN beheerder is.
-  //    (nooit vertrouwen op wat de browser zegt)
+async function requireAdmin() {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) {
-    return NextResponse.json({ error: 'Niet ingelogd.' }, { status: 401 });
+    return { errorResponse: NextResponse.json({ error: 'Niet ingelogd.' }, { status: 401 }) };
   }
-
   const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
+    .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
   if (!adminEmails.includes((user.email || '').toLowerCase())) {
-    return NextResponse.json({ error: 'Geen beheerderstoegang.' }, { status: 403 });
+    return { errorResponse: NextResponse.json({ error: 'Geen beheerderstoegang.' }, { status: 403 }) };
   }
+  return { user };
+}
+
+export async function GET() {
+  const { errorResponse } = await requireAdmin();
+  if (errorResponse) return errorResponse;
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('upload_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ geschiedenis: data });
+}
+
+export async function POST(request) {
+  const { errorResponse, user } = await requireAdmin();
+  if (errorResponse) return errorResponse;
 
   // 2. Lees de geüploade rijen.
   const { items } = await request.json();
@@ -63,6 +78,15 @@ export async function POST(request) {
     }
     updatedCount = count ?? toUpdate.length;
   }
+
+  // 5. Bewaar dit uploadmoment in de geschiedenis, zodat je later kan terugzien wanneer je hebt geüpload.
+  await admin.from('upload_log').insert({
+    user_email: user.email,
+    updated_count: updatedCount,
+    ignored_count: ignoredCount,
+    total_items: items.length,
+    total_codes: existingCodes.size,
+  });
 
   return NextResponse.json({
     updatedCount,
