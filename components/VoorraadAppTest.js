@@ -81,6 +81,7 @@ function sortValues(field, arr) {
 const TRANSLATIONS = {
   nl: {
     langNaam: 'Nederlands',
+    taalLabel: 'Taal',
     klanten: 'Klanten',
     upload: 'Upload',
     hoofdportaal: '← Hoofdportaal',
@@ -116,6 +117,7 @@ const TRANSLATIONS = {
   },
   en: {
     langNaam: 'English',
+    taalLabel: 'Language',
     klanten: 'Customers',
     upload: 'Upload',
     hoofdportaal: '← Main portal',
@@ -240,28 +242,15 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
         <div className="brand">
           <img src={LOGO_DATA_URI} alt="Electramo" style={{ height: 44, width: 'auto', display: 'block' }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setLang('nl')}
-              aria-pressed={lang === 'nl'}
-              style={{ background: lang === 'nl' ? 'var(--accent)' : 'var(--steel)', padding: '9px 12px' }}
-            >
-              NL
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setLang('en')}
-              aria-pressed={lang === 'en'}
-              style={{ background: lang === 'en' ? 'var(--accent)' : 'var(--steel)', padding: '9px 12px' }}
-            >
-              EN
-            </button>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+          <div>
+            <label>{t.taalLabel}</label>
+            <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ minWidth: 120 }}>
+              <option value="nl">Nederlands</option>
+              <option value="en">English</option>
+            </select>
           </div>
-          <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
+          <span style={{ fontSize: 12, color: 'var(--steel)', paddingBottom: 9 }}>{userEmail}</span>
           {isAdmin && (
             <>
               <a href="/test/admin/klanten" className="btn">{t.klanten}</a>
