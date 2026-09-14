@@ -30,6 +30,15 @@ function fmtKorting(v) {
   return v.toLocaleString('nl-NL', { maximumFractionDigits: 1 }) + '%';
 }
 
+// Materiaal komt als vaste Nederlandse waarde uit de database (Aluminium/Gietijzer)
+// — in het Engels vertalen we alleen de weergave, de onderliggende filterwaarde
+// blijft de originele DB-waarde.
+const MATERIAAL_EN = { Gietijzer: 'Cast Iron' };
+function fmtMateriaal(v, lang) {
+  if (!v) return v;
+  return lang === 'en' ? (MATERIAAL_EN[v] || v) : v;
+}
+
 function stockFlag(v) {
   if (v === 0) return <span className="flag flag-zero">0</span>;
   if (v > 0 && v <= 3) return <span className="flag flag-low">{v}</span>;
@@ -220,7 +229,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
     fBvorm && { label: `${t.filterBouwvorm}: ${fBvorm}`, clear: () => setFBvorm('') },
     fVolt && { label: `${t.filterVolt}: ${fVolt}`, clear: () => setFVolt('') },
     fIe && { label: `${t.filterIeKlasse}: ${fIe}`, clear: () => setFIe('') },
-    fMateriaal && { label: `${t.filterMateriaal}: ${fMateriaal}`, clear: () => setFMateriaal('') },
+    fMateriaal && { label: `${t.filterMateriaal}: ${fmtMateriaal(fMateriaal, lang)}`, clear: () => setFMateriaal('') },
     onlyStock && { label: t.alleenOpVoorraad, clear: () => setOnlyStock(false) },
     onlyFlens && { label: t.alleenFlenzen, clear: () => setOnlyFlens(false) },
   ].filter(Boolean);
@@ -332,7 +341,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             <label>{t.filterMateriaal}</label>
             <select value={fMateriaal} onChange={(e) => setFMateriaal(e.target.value)}>
               <option value="">{t.alle}</option>
-              {materiaalOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+              {materiaalOptions.map((o) => <option key={o} value={o}>{fmtMateriaal(o, lang)}</option>)}
             </select>
           </div>
         </div>
@@ -428,7 +437,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
                 <td>{p.bouwvorm || '—'}</td>
                 <td>{p.volt || '—'}</td>
                 <td>{p.ie_klasse || '—'}</td>
-                <td>{p.materiaal || '—'}</td>
+                <td>{fmtMateriaal(p.materiaal, lang) || '—'}</td>
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
                 <td style={{ textAlign: 'right' }}>{p.inkomend}</td>
                 {toontPrijzen && <td style={{ textAlign: 'right' }}>{fmtPrijs(p.prijs_bruto)}</td>}
