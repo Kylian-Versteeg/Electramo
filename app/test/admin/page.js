@@ -1,15 +1,15 @@
 import { redirect } from 'next/navigation';
-import { createServerSupabase } from '../../../../lib/supabaseServer';
-import KlantenBeheerTest from '../../../../components/KlantenBeheerTest';
+import { createServerSupabase } from '../../../lib/supabaseServer';
+import AdminUploadTest from '../../../components/AdminUploadTest';
 
-export const dynamic = 'force-dynamic';
-
-export default async function KlantenTestPage() {
+export default async function TestAdminPage() {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
 
   const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
   const isAdmin = !!user && adminEmails.includes((user.email || '').toLowerCase());
 
   if (!isAdmin) {
@@ -19,13 +19,13 @@ export default async function KlantenTestPage() {
   return (
     <div className="wrap">
       <header>
-        <div className="title">Electramo<span>portaal</span> — Klanten beheren (test)</div>
-        <a href="/" className="btn">&larr; Terug naar hoofdmenu</a>
+        <div className="title">Electramo<span>portaal</span> — Upload (test)</div>
+        <a href="/test" className="btn">&larr; Terug naar testomgeving</a>
       </header>
       <div className="test-banner">
         Je bevindt je in de testomgeving — wijzigingen hier staan pas op de hoofdpagina zodra ze zijn overgezet
       </div>
-      <KlantenBeheerTest />
+      <AdminUploadTest />
     </div>
   );
 }

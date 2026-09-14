@@ -62,7 +62,7 @@ function sortValues(field, arr) {
   return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
-export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs }) {
+export default function VoorraadAppTest({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs }) {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [fBouw, setFBouw] = useState('');
@@ -153,14 +153,18 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
           <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
           {isAdmin && (
             <>
-              <a href="/admin/klanten" className="btn">Klanten</a>
-              <a href="/admin" className="btn">Upload</a>
-              <a href="/test" className="btn test">Testomgeving</a>
+              <a href="/test/admin/klanten" className="btn">Klanten</a>
+              <a href="/test/admin" className="btn">Upload</a>
+              <a href="/" className="btn">&larr; Hoofdportaal</a>
             </>
           )}
           <button className="btn" onClick={handleLogout}>Uitloggen</button>
         </div>
       </header>
+
+      <div className="test-banner">
+        Je bevindt je in de testomgeving — wijzigingen hier staan pas op de hoofdpagina zodra ze zijn overgezet
+      </div>
 
       {loadError && (
         <div className="panel error">Kon de voorraad niet laden: {loadError}</div>
