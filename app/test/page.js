@@ -4,9 +4,20 @@ import VoorraadAppTest from '../../components/VoorraadAppTest';
 
 export const dynamic = 'force-dynamic'; // altijd verse data, geen caching
 
+// Alleen de kolommen die de UI en de prijsberekening daadwerkelijk gebruiken —
+// scheelt onnodige data t.o.v. select('*') (dat ook ongebruikte technische
+// specs als bearing_de, weight, hs_code etc. zou meesturen).
+const PRODUCT_COLUMNS = 'code, omschrijving, bouwgrootte, vermogen, polen, bouwvorm, volt, ie_klasse, materiaal, vrije_voorraad, inkomend, categorie, prijs_bruto_2023, prijs_bruto_2025, prijs_bruto_2025_b5';
+
 export default async function TestHomePage() {
   const supabase = createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
+
+  // Gebruiker ophalen en producten ophalen zijn onafhankelijk van elkaar —
+  // gelijktijdig uitvoeren scheelt een round-trip t.o.v. na elkaar wachten.
+  const [{ data: { user } }, { data: products, error }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from('products').select(PRODUCT_COLUMNS).order('code', { ascending: true }),
+  ]);
 
   const adminEmails = (process.env.ADMIN_EMAILS || '')
     .split(',')
@@ -17,11 +28,6 @@ export default async function TestHomePage() {
   if (!isAdmin) {
     redirect('/');
   }
-
-  const { data: products, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('code', { ascending: true });
 
   let liveProducts = products || [];
 
