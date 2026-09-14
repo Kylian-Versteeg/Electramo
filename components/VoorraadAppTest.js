@@ -31,12 +31,15 @@ function fmtKorting(v) {
 }
 
 // Materiaal komt als vaste Nederlandse waarde uit de database (Aluminium/Gietijzer)
-// — in het Engels vertalen we alleen de weergave, de onderliggende filterwaarde
+// — in andere talen vertalen we alleen de weergave, de onderliggende filterwaarde
 // blijft de originele DB-waarde.
-const MATERIAAL_EN = { Gietijzer: 'Cast Iron' };
+const MATERIAAL_VERTALINGEN = {
+  en: { Gietijzer: 'Cast Iron' },
+  fr: { Gietijzer: 'Fonte' },
+};
 function fmtMateriaal(v, lang) {
   if (!v) return v;
-  return lang === 'en' ? (MATERIAAL_EN[v] || v) : v;
+  return MATERIAAL_VERTALINGEN[lang]?.[v] || v;
 }
 
 function stockFlag(v) {
@@ -151,6 +154,42 @@ const TRANSLATIONS = {
     kwLabel: (v) => `${v} kW`,
     poligLabel: (v) => `${v} poles`,
   },
+  fr: {
+    langNaam: 'Français',
+    taalLabel: 'Langue',
+    klanten: 'Clients',
+    upload: 'Upload',
+    hoofdportaal: '← Portail principal',
+    uitloggen: 'Déconnexion',
+    testBanner: "Vous êtes dans l'environnement de test — les modifications ici n'apparaîtront sur la page principale qu'une fois transférées",
+    konNietLaden: 'Impossible de charger le stock : ',
+    zoekPlaceholder: 'Rechercher par code article ou description...',
+    filterVermogen: 'Puissance',
+    filterBouwgrootte: 'Taille de carcasse',
+    filterPolen: 'Pôles',
+    filterBouwvorm: 'Montage',
+    filterVolt: 'Tension',
+    filterIeKlasse: 'Classe IE',
+    filterMateriaal: 'Matériau',
+    alle: 'Tous',
+    alleenOpVoorraad: 'En stock uniquement',
+    alleenFlenzen: 'Brides uniquement',
+    wisFilters: 'Effacer les filtres',
+    allesWissen: 'Tout effacer',
+    artikelenGevonden: 'articles trouvés',
+    naamplaatInfo: (prijs) => `Le prix du moteur inclut la plaque signalétique ${prijs}`,
+    geenArtikelen: 'Aucun article trouvé avec ces filtres.',
+    kolomArtikelcode: 'Code article',
+    kolomOmschrijving: 'Description',
+    kolomVrijeVoorraad: 'Stock disponible',
+    kolomInkomend: 'Entrant',
+    kolomBruto: 'Brut',
+    kolomKorting: 'Remise',
+    kolomNetto: 'Net',
+    zoekenChip: (s) => `Recherche : "${s}"`,
+    kwLabel: (v) => `${v} kW`,
+    poligLabel: (v) => `${v} pôles`,
+  },
 };
 
 export default function VoorraadAppTest({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs }) {
@@ -242,15 +281,21 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
         <div className="brand">
           <img src={LOGO_DATA_URI} alt="Electramo" style={{ height: 44, width: 'auto', display: 'block' }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
-          <div>
-            <label>{t.taalLabel}</label>
-            <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ minWidth: 120 }}>
-              <option value="nl">Nederlands</option>
-              <option value="en">English</option>
-            </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="lang-switch" role="group" aria-label={t.taalLabel}>
+            {['nl', 'en', 'fr'].map((code) => (
+              <button
+                key={code}
+                type="button"
+                className={code === lang ? 'active' : ''}
+                onClick={() => setLang(code)}
+                aria-pressed={code === lang}
+              >
+                {code.toUpperCase()}
+              </button>
+            ))}
           </div>
-          <span style={{ fontSize: 12, color: 'var(--steel)', paddingBottom: 9 }}>{userEmail}</span>
+          <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
           {isAdmin && (
             <>
               <a href="/test/admin/klanten" className="btn">{t.klanten}</a>

@@ -102,3 +102,18 @@ tbody tr:hover { background: #f5f8fa; }
 }
 .btn.test { background: #b3401f; }
 .btn.test:hover { background: #8f331a; }
+
+.lang-switch {
+  display: inline-flex; align-items: center;
+  border: 1px solid var(--line); border-radius: 7px; overflow: hidden;
+  background: #fff;
+}
+.lang-switch button {
+  border: none; background: transparent; color: var(--steel);
+  font-size: 12px; font-weight: 700; letter-spacing: .02em;
+  padding: 9px 13px; cursor: pointer;
+}
+.lang-switch button + button { border-left: 1px solid var(--line); }
+.lang-switch button:hover { background: var(--bg); }
+.lang-switch button.active { background: var(--ink); color: #fff; }
+.lang-switch button.active:hover { background: var(--ink); }
