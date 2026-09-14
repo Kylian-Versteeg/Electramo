@@ -83,6 +83,15 @@ voorraad beheren.
   doorgevoerd (committen + pushen) zonder dat de gebruiker dit handmatig
   hoeft te doen — dat is precies de reden dat deze sessie rechtstreeks
   toegang tot de repo heeft.
+- **Commit en push code-wijzigingen altijd direct naar de `main`-branch**
+  (niet naar een losse feature-/sessiebranch laten staan). Vercel deployt
+  alleen `main` naar Production; andere branches worden alleen als Preview
+  gedeployed. De gebruiker wil dat wijzigingen meteen op productie staan,
+  dus werk rechtstreeks op `main` en push daar meteen naartoe, tenzij
+  expliciet om een losse branch/PR wordt gevraagd. (Dit staat los van de
+  losse "/test"-omgeving in de app zelf, bedoeld om nieuwe functionaliteit
+  binnen het portaal uit te proberen voor je hem overzet naar de
+  hoofdpagina.)
 - Wees precies met prijzen/kortingen: reken voor, en dubbelcheck tegen
   bestaande waarden in Supabase voor je iets aanpast, zeker bij
   prijsberekeningen.
