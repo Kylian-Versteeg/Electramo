@@ -25,6 +25,11 @@ function fmtPrijs(v) {
   return '€ ' + v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function fmtKorting(v) {
+  if (v === null || v === undefined) return '—';
+  return v.toLocaleString('nl-NL', { maximumFractionDigits: 1 }) + '%';
+}
+
 function stockFlag(v) {
   if (v === 0) return <span className="flag flag-zero">0</span>;
   if (v > 0 && v <= 3) return <span className="flag flag-low">{v}</span>;
@@ -283,7 +288,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
         <table>
           <colgroup>
             <col style={{ width: toontPrijzen ? '11%' : '12%' }} />
-            <col style={{ width: toontPrijzen ? '13%' : '18%' }} />
+            <col style={{ width: toontPrijzen ? '10%' : '18%' }} />
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
             <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
@@ -291,10 +296,11 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
             <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
-            <col style={{ width: toontPrijzen ? '7%' : '9%' }} />
+            <col style={{ width: toontPrijzen ? '6%' : '9%' }} />
             <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
-            {toontPrijzen && <col style={{ width: '8%' }} />}
-            {toontPrijzen && <col style={{ width: '8%' }} />}
+            {toontPrijzen && <col style={{ width: '7%' }} />}
+            {toontPrijzen && <col style={{ width: '6%' }} />}
+            {toontPrijzen && <col style={{ width: '7%' }} />}
           </colgroup>
           <thead>
             <tr>
@@ -310,6 +316,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
               <th style={{ textAlign: 'right' }}>Vrije voorraad</th>
               <th style={{ textAlign: 'right' }}>Inkomend</th>
               {toontPrijzen && <th style={{ textAlign: 'right' }}>Bruto</th>}
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>Korting</th>}
               {toontPrijzen && <th style={{ textAlign: 'right' }}>Netto</th>}
             </tr>
           </thead>
@@ -328,6 +335,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
                 <td style={{ textAlign: 'right' }}>{p.inkomend}</td>
                 {toontPrijzen && <td style={{ textAlign: 'right' }}>{fmtPrijs(p.prijs_bruto)}</td>}
+                {toontPrijzen && <td style={{ textAlign: 'right', color: 'var(--steel)' }}>{fmtKorting(p.korting_percentage)}</td>}
                 {toontPrijzen && <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtPrijs(p.prijs_netto)}</td>}
               </tr>
             ))}
