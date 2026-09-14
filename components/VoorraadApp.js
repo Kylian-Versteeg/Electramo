@@ -154,7 +154,9 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
           {isAdmin && (
             <>
               <a href="/admin/klanten" className="btn">Klanten</a>
+              <a href="/admin/klanten/test" className="btn test">Klanten (test)</a>
               <a href="/admin" className="btn">Upload</a>
+              <a href="/admin/test" className="btn test">Upload (test)</a>
             </>
           )}
           <button className="btn" onClick={handleLogout}>Uitloggen</button>
