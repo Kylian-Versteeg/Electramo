@@ -25,6 +25,23 @@ function fmtPrijs(v) {
   return '€ ' + v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function fmtKorting(v) {
+  if (v === null || v === undefined) return '—';
+  return v.toLocaleString('nl-NL', { maximumFractionDigits: 1 }) + '%';
+}
+
+// Materiaal komt als vaste Nederlandse waarde uit de database (Aluminium/Gietijzer)
+// — in andere talen vertalen we alleen de weergave, de onderliggende filterwaarde
+// blijft de originele DB-waarde.
+const MATERIAAL_VERTALINGEN = {
+  en: { Gietijzer: 'Cast Iron' },
+  fr: { Gietijzer: 'Fonte' },
+};
+function fmtMateriaal(v, lang) {
+  if (!v) return v;
+  return MATERIAAL_VERTALINGEN[lang]?.[v] || v;
+}
+
 function stockFlag(v) {
   if (v === 0) return <span className="flag flag-zero">0</span>;
   if (v > 0 && v <= 3) return <span className="flag flag-low">{v}</span>;
@@ -62,8 +79,120 @@ function sortValues(field, arr) {
   return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
+// Vertalingen voor de taalswitch (NL/EN/FR) — alleen UI-teksten, de data zelf
+// (artikelcodes, omschrijvingen uit de database) wordt niet vertaald.
+const TRANSLATIONS = {
+  nl: {
+    langNaam: 'Nederlands',
+    taalLabel: 'Taal',
+    klanten: 'Klanten',
+    upload: 'Upload',
+    testomgeving: 'Testomgeving',
+    uitloggen: 'Uitloggen',
+    konNietLaden: 'Kon de voorraad niet laden: ',
+    zoekPlaceholder: 'Zoek op artikelcode of omschrijving...',
+    filterVermogen: 'Vermogen',
+    filterBouwgrootte: 'Bouwgrootte',
+    filterPolen: 'Polen',
+    filterBouwvorm: 'Bouwvorm',
+    filterVolt: 'Volt',
+    filterIeKlasse: 'IE klasse',
+    filterMateriaal: 'Materiaal',
+    alle: 'Alle',
+    alleenOpVoorraad: 'Alleen op voorraad',
+    alleenFlenzen: 'Alleen flenzen',
+    wisFilters: 'Wis filters',
+    allesWissen: 'Alles wissen',
+    artikelenGevonden: 'artikelen gevonden',
+    naamplaatInfo: (prijs) => `Motorprijs is inclusief naamplaat ${prijs}`,
+    geenArtikelen: 'Geen artikelen gevonden met deze filters.',
+    kolomArtikelcode: 'Artikelcode',
+    kolomOmschrijving: 'Omschrijving',
+    kolomVrijeVoorraad: 'Voorraad',
+    kolomInkomend: 'Inkomend',
+    kolomBruto: 'Bruto',
+    kolomKorting: 'Korting',
+    kolomNetto: 'Netto',
+    zoekenChip: (s) => `Zoeken: "${s}"`,
+    kwLabel: (v) => `${v} kW`,
+    poligLabel: (v) => `${v}-polig`,
+  },
+  en: {
+    langNaam: 'English',
+    taalLabel: 'Language',
+    klanten: 'Customers',
+    upload: 'Upload',
+    testomgeving: 'Test environment',
+    uitloggen: 'Log out',
+    konNietLaden: 'Could not load stock: ',
+    zoekPlaceholder: 'Search by article code or description...',
+    filterVermogen: 'Power',
+    filterBouwgrootte: 'Frame size',
+    filterPolen: 'Poles',
+    filterBouwvorm: 'Mounting',
+    filterVolt: 'Voltage',
+    filterIeKlasse: 'IE class',
+    filterMateriaal: 'Material',
+    alle: 'All',
+    alleenOpVoorraad: 'In stock only',
+    alleenFlenzen: 'Flanges only',
+    wisFilters: 'Clear filters',
+    allesWissen: 'Clear all',
+    artikelenGevonden: 'items found',
+    naamplaatInfo: (prijs) => `Motor price includes nameplate ${prijs}`,
+    geenArtikelen: 'No items found with these filters.',
+    kolomArtikelcode: 'Article code',
+    kolomOmschrijving: 'Description',
+    kolomVrijeVoorraad: 'Stock',
+    kolomInkomend: 'Incoming',
+    kolomBruto: 'Gross',
+    kolomKorting: 'Discount',
+    kolomNetto: 'Net',
+    zoekenChip: (s) => `Search: "${s}"`,
+    kwLabel: (v) => `${v} kW`,
+    poligLabel: (v) => `${v} poles`,
+  },
+  fr: {
+    langNaam: 'Français',
+    taalLabel: 'Langue',
+    klanten: 'Clients',
+    upload: 'Upload',
+    testomgeving: 'Environnement de test',
+    uitloggen: 'Déconnexion',
+    konNietLaden: 'Impossible de charger le stock : ',
+    zoekPlaceholder: 'Rechercher par code article ou description...',
+    filterVermogen: 'Puissance',
+    filterBouwgrootte: 'Taille de carcasse',
+    filterPolen: 'Pôles',
+    filterBouwvorm: 'Montage',
+    filterVolt: 'Tension',
+    filterIeKlasse: 'Classe IE',
+    filterMateriaal: 'Matériau',
+    alle: 'Tous',
+    alleenOpVoorraad: 'En stock uniquement',
+    alleenFlenzen: 'Brides uniquement',
+    wisFilters: 'Effacer les filtres',
+    allesWissen: 'Tout effacer',
+    artikelenGevonden: 'articles trouvés',
+    naamplaatInfo: (prijs) => `Le prix du moteur inclut la plaque signalétique ${prijs}`,
+    geenArtikelen: 'Aucun article trouvé avec ces filtres.',
+    kolomArtikelcode: 'Code article',
+    kolomOmschrijving: 'Description',
+    kolomVrijeVoorraad: 'Stock',
+    kolomInkomend: 'Entrant',
+    kolomBruto: 'Brut',
+    kolomKorting: 'Remise',
+    kolomNetto: 'Net',
+    zoekenChip: (s) => `Recherche : "${s}"`,
+    kwLabel: (v) => `${v} kW`,
+    poligLabel: (v) => `${v} pôles`,
+  },
+};
+
 export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs }) {
   const router = useRouter();
+  const [lang, setLang] = useState('nl');
+  const t = TRANSLATIONS[lang];
   const [search, setSearch] = useState('');
   const [fBouw, setFBouw] = useState('');
   const [fPolen, setFPolen] = useState('');
@@ -131,16 +260,16 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
   }
 
   const actieveFilters = [
-    search && { label: `Zoeken: "${search}"`, clear: () => setSearch('') },
-    fBouw && { label: `Bouwgrootte: ${fBouw}`, clear: () => setFBouw('') },
-    fVermogen && { label: `Vermogen: ${fVermogen} kW`, clear: () => setFVermogen('') },
-    fPolen && { label: `Polen: ${fPolen}-polig`, clear: () => setFPolen('') },
-    fBvorm && { label: `Bouwvorm: ${fBvorm}`, clear: () => setFBvorm('') },
-    fVolt && { label: `Volt: ${fVolt}`, clear: () => setFVolt('') },
-    fIe && { label: `IE klasse: ${fIe}`, clear: () => setFIe('') },
-    fMateriaal && { label: `Materiaal: ${fMateriaal}`, clear: () => setFMateriaal('') },
-    onlyStock && { label: 'Alleen op voorraad', clear: () => setOnlyStock(false) },
-    onlyFlens && { label: 'Alleen flenzen', clear: () => setOnlyFlens(false) },
+    search && { label: t.zoekenChip(search), clear: () => setSearch('') },
+    fVermogen && { label: `${t.filterVermogen}: ${t.kwLabel(fVermogen)}`, clear: () => setFVermogen('') },
+    fBouw && { label: `${t.filterBouwgrootte}: ${fBouw}`, clear: () => setFBouw('') },
+    fPolen && { label: `${t.filterPolen}: ${t.poligLabel(fPolen)}`, clear: () => setFPolen('') },
+    fBvorm && { label: `${t.filterBouwvorm}: ${fBvorm}`, clear: () => setFBvorm('') },
+    fVolt && { label: `${t.filterVolt}: ${fVolt}`, clear: () => setFVolt('') },
+    fIe && { label: `${t.filterIeKlasse}: ${fIe}`, clear: () => setFIe('') },
+    fMateriaal && { label: `${t.filterMateriaal}: ${fmtMateriaal(fMateriaal, lang)}`, clear: () => setFMateriaal('') },
+    onlyStock && { label: t.alleenOpVoorraad, clear: () => setOnlyStock(false) },
+    onlyFlens && { label: t.alleenFlenzen, clear: () => setOnlyFlens(false) },
   ].filter(Boolean);
 
   return (
@@ -150,20 +279,33 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
           <img src={LOGO_DATA_URI} alt="Electramo" style={{ height: 44, width: 'auto', display: 'block' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="lang-switch" role="group" aria-label={t.taalLabel}>
+            {['nl', 'en', 'fr'].map((code) => (
+              <button
+                key={code}
+                type="button"
+                className={code === lang ? 'active' : ''}
+                onClick={() => setLang(code)}
+                aria-pressed={code === lang}
+              >
+                {code.toUpperCase()}
+              </button>
+            ))}
+          </div>
           <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
           {isAdmin && (
             <>
-              <a href="/admin/klanten" className="btn">Klanten</a>
-              <a href="/admin" className="btn">Upload</a>
-              <a href="/test" className="btn test">Testomgeving</a>
+              <a href="/admin/klanten" className="btn">{t.klanten}</a>
+              <a href="/admin" className="btn">{t.upload}</a>
+              <a href="/test" className="btn test">{t.testomgeving}</a>
             </>
           )}
-          <button className="btn" onClick={handleLogout}>Uitloggen</button>
+          <button className="btn" onClick={handleLogout}>{t.uitloggen}</button>
         </div>
       </header>
 
       {loadError && (
-        <div className="panel error">Kon de voorraad niet laden: {loadError}</div>
+        <div className="panel error">{t.konNietLaden}{loadError}</div>
       )}
       {odooNotice && (
         <div className="panel" style={{ borderColor: '#f0c36d', background: '#fbf3de', color: '#8a6d1f', fontSize: 13 }}>
@@ -174,59 +316,59 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
       <div className="panel">
         <input
           type="text"
-          placeholder="Zoek op artikelcode of omschrijving..."
+          placeholder={t.zoekPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ marginBottom: 14 }}
         />
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div>
-            <label>Bouwgrootte</label>
+            <label>{t.filterVermogen}</label>
+            <select value={fVermogen} onChange={(e) => setFVermogen(e.target.value)}>
+              <option value="">{t.alle}</option>
+              {vermogenOptions.map((o) => <option key={o} value={o}>{t.kwLabel(o)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>{t.filterBouwgrootte}</label>
             <select value={fBouw} onChange={(e) => setFBouw(e.target.value)}>
-              <option value="">Alle</option>
+              <option value="">{t.alle}</option>
               {bouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
-            <label>Vermogen</label>
-            <select value={fVermogen} onChange={(e) => setFVermogen(e.target.value)}>
-              <option value="">Alle</option>
-              {vermogenOptions.map((o) => <option key={o} value={o}>{o} kW</option>)}
-            </select>
-          </div>
-          <div>
-            <label>Polen</label>
+            <label>{t.filterPolen}</label>
             <select value={fPolen} onChange={(e) => setFPolen(e.target.value)}>
-              <option value="">Alle</option>
-              {polenOptions.map((o) => <option key={o} value={o}>{o}-polig</option>)}
+              <option value="">{t.alle}</option>
+              {polenOptions.map((o) => <option key={o} value={o}>{t.poligLabel(o)}</option>)}
             </select>
           </div>
           <div>
-            <label>Bouwvorm</label>
+            <label>{t.filterBouwvorm}</label>
             <select value={fBvorm} onChange={(e) => setFBvorm(e.target.value)}>
-              <option value="">Alle</option>
+              <option value="">{t.alle}</option>
               {bvormOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
-            <label>Volt</label>
+            <label>{t.filterVolt}</label>
             <select value={fVolt} onChange={(e) => setFVolt(e.target.value)}>
-              <option value="">Alle</option>
+              <option value="">{t.alle}</option>
               {voltOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
-            <label>IE klasse</label>
+            <label>{t.filterIeKlasse}</label>
             <select value={fIe} onChange={(e) => setFIe(e.target.value)}>
-              <option value="">Alle</option>
+              <option value="">{t.alle}</option>
               {ieOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
-            <label>Materiaal</label>
+            <label>{t.filterMateriaal}</label>
             <select value={fMateriaal} onChange={(e) => setFMateriaal(e.target.value)}>
-              <option value="">Alle</option>
-              {materiaalOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+              <option value="">{t.alle}</option>
+              {materiaalOptions.map((o) => <option key={o} value={o}>{fmtMateriaal(o, lang)}</option>)}
             </select>
           </div>
         </div>
@@ -237,7 +379,7 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
               onChange={(e) => setOnlyStock(e.target.checked)}
               style={{ width: 16, height: 16 }}
             />
-            <label htmlFor="onlyStock" style={{ textTransform: 'none', fontWeight: 600 }}>Alleen op voorraad</label>
+            <label htmlFor="onlyStock" style={{ textTransform: 'none', fontWeight: 600 }}>{t.alleenOpVoorraad}</label>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
@@ -245,10 +387,10 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
               onChange={(e) => setOnlyFlens(e.target.checked)}
               style={{ width: 16, height: 16 }}
             />
-            <label htmlFor="onlyFlens" style={{ textTransform: 'none', fontWeight: 600 }}>Alleen flenzen</label>
+            <label htmlFor="onlyFlens" style={{ textTransform: 'none', fontWeight: 600 }}>{t.alleenFlenzen}</label>
           </div>
           <button className="btn" onClick={resetFilters}>
-            Wis filters
+            {t.wisFilters}
           </button>
         </div>
       </div>
@@ -261,17 +403,17 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
             </button>
           ))}
           <button type="button" className="chip chip-clear-all" onClick={resetFilters}>
-            Alles wissen
+            {t.allesWissen}
           </button>
         </div>
       )}
 
       <div style={{ marginBottom: 10, fontSize: 13, color: 'var(--steel)' }}>
-        <b style={{ color: 'var(--ink)' }}>{filtered.length}</b> artikelen gevonden
+        <b style={{ color: 'var(--ink)' }}>{filtered.length}</b> {t.artikelenGevonden}
       </div>
       {toontPrijzen && naamplaatActief && naamplaatPrijs !== null && naamplaatPrijs !== undefined && (
         <div style={{ marginBottom: 10, fontSize: 13, color: 'var(--steel)' }}>
-          Motorprijs is inclusief naamplaat {fmtPrijs(naamplaatPrijs)}
+          {t.naamplaatInfo(fmtPrijs(naamplaatPrijs))}
         </div>
       )}
 
@@ -279,7 +421,7 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
         <table>
           <colgroup>
             <col style={{ width: toontPrijzen ? '11%' : '12%' }} />
-            <col style={{ width: toontPrijzen ? '13%' : '18%' }} />
+            <col style={{ width: toontPrijzen ? '10%' : '18%' }} />
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
             <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
@@ -287,26 +429,28 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
             <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
             <col style={{ width: toontPrijzen ? '7%' : '8%' }} />
-            <col style={{ width: toontPrijzen ? '7%' : '9%' }} />
+            <col style={{ width: toontPrijzen ? '6%' : '9%' }} />
             <col style={{ width: toontPrijzen ? '6%' : '7%' }} />
-            {toontPrijzen && <col style={{ width: '8%' }} />}
-            {toontPrijzen && <col style={{ width: '8%' }} />}
+            {toontPrijzen && <col style={{ width: '7%' }} />}
+            {toontPrijzen && <col style={{ width: '6%' }} />}
+            {toontPrijzen && <col style={{ width: '7%' }} />}
           </colgroup>
           <thead>
             <tr>
-              <th>Artikelcode</th>
-              <th>Omschrijving</th>
-              <th>Bouwgrootte</th>
-              <th>Vermogen</th>
-              <th>Polen</th>
-              <th>Bouwvorm</th>
-              <th>Volt</th>
-              <th>IE klasse</th>
-              <th>Materiaal</th>
-              <th style={{ textAlign: 'right' }}>Vrije voorraad</th>
-              <th style={{ textAlign: 'right' }}>Inkomend</th>
-              {toontPrijzen && <th style={{ textAlign: 'right' }}>Bruto</th>}
-              {toontPrijzen && <th style={{ textAlign: 'right' }}>Netto</th>}
+              <th>{t.kolomArtikelcode}</th>
+              <th>{t.kolomOmschrijving}</th>
+              <th>{t.filterVermogen}</th>
+              <th>{t.filterBouwgrootte}</th>
+              <th>{t.filterPolen}</th>
+              <th>{t.filterBouwvorm}</th>
+              <th>{t.filterVolt}</th>
+              <th>{t.filterIeKlasse}</th>
+              <th>{t.filterMateriaal}</th>
+              <th style={{ textAlign: 'right' }}>{t.kolomVrijeVoorraad}</th>
+              <th style={{ textAlign: 'right' }}>{t.kolomInkomend}</th>
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>{t.kolomBruto}</th>}
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>{t.kolomKorting}</th>}
+              {toontPrijzen && <th style={{ textAlign: 'right' }}>{t.kolomNetto}</th>}
             </tr>
           </thead>
           <tbody>
@@ -314,16 +458,17 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
               <tr key={p.code}>
                 <td style={{ fontFamily: 'var(--mono)', fontWeight: 600 }}>{p.code}</td>
                 <td>{p.omschrijving || '—'}</td>
+                <td>{p.vermogen ? t.kwLabel(p.vermogen) : '—'}</td>
                 <td>{p.bouwgrootte || '—'}</td>
-                <td>{p.vermogen ? `${p.vermogen} kW` : '—'}</td>
-                <td>{p.polen ? `${p.polen}-polig` : '—'}</td>
+                <td>{p.polen ? t.poligLabel(p.polen) : '—'}</td>
                 <td>{p.bouwvorm || '—'}</td>
                 <td>{p.volt || '—'}</td>
                 <td>{p.ie_klasse || '—'}</td>
-                <td>{p.materiaal || '—'}</td>
+                <td>{fmtMateriaal(p.materiaal, lang) || '—'}</td>
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
                 <td style={{ textAlign: 'right' }}>{p.inkomend}</td>
                 {toontPrijzen && <td style={{ textAlign: 'right' }}>{fmtPrijs(p.prijs_bruto)}</td>}
+                {toontPrijzen && <td style={{ textAlign: 'right', color: 'var(--steel)' }}>{fmtKorting(p.korting_percentage)}</td>}
                 {toontPrijzen && <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtPrijs(p.prijs_netto)}</td>}
               </tr>
             ))}
@@ -331,7 +476,7 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
         </table>
         {filtered.length === 0 && (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--steel-light)' }}>
-            Geen artikelen gevonden met deze filters.
+            {t.geenArtikelen}
           </div>
         )}
       </div>
