@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabaseClient';
 import { LOGO_DATA_URI } from '../lib/logo';
@@ -85,27 +85,37 @@ function toggleWaarde(arr, waarde) {
 }
 
 // Herbruikbare multi-select filter: knop met aantal geselecteerd, eronder een
-// uitklapbaar paneel met checkboxes per optie. Zo blijft een eerder gekozen
-// waarde (bv. 2,2 kW) staan als je daarna nog een waarde (bv. 3 kW) aanvinkt.
+// uitklapbaar paneel met aanklikbare opties (geen checkboxes). Elke klik op
+// een optie schakelt hem aan/uit én klapt het paneel meteen weer dicht — voor
+// nog een waarde klik je de knop opnieuw open. Zo blijft een eerder gekozen
+// waarde (bv. 2,2 kW) staan als je daarna nog een waarde (bv. 3 kW) kiest.
 function FilterMultiSelect({ label, options, selected, onToggle, formatOption, allLabel, selectedLabel }) {
+  const detailsRef = useRef(null);
+
+  function kies(o) {
+    onToggle(o);
+    if (detailsRef.current) detailsRef.current.open = false;
+  }
+
   return (
     <div>
       <label>{label}</label>
-      <details className="multiselect">
+      <details className="multiselect" ref={detailsRef}>
         <summary>{selected.length > 0 ? `${selected.length} ${selectedLabel}` : allLabel}</summary>
         <div className="multiselect-panel">
           {options.length === 0 && (
             <span className="multiselect-empty">{allLabel}</span>
           )}
           {options.map((o) => (
-            <label key={o} className="multiselect-option">
-              <input
-                type="checkbox"
-                checked={selected.includes(o)}
-                onChange={() => onToggle(o)}
-              />
+            <button
+              key={o}
+              type="button"
+              className={selected.includes(o) ? 'multiselect-option selected' : 'multiselect-option'}
+              onClick={() => kies(o)}
+            >
+              <span className="multiselect-check">{selected.includes(o) ? '✓' : ''}</span>
               {formatOption(o)}
-            </label>
+            </button>
           ))}
         </div>
       </details>
