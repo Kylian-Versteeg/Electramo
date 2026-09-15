@@ -99,7 +99,7 @@ const TRANSLATIONS = {
     filterVolt: 'Volt',
     filterIeKlasse: 'IE klasse',
     filterMateriaal: 'Materiaal',
-    filterFlens: 'Flens',
+    filterFlens: 'Flenzen',
     alle: 'Alle',
     alleenOpVoorraad: 'Alleen op voorraad',
     wisFilters: 'Wis filters',
