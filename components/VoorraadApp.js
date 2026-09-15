@@ -49,6 +49,11 @@ function stockFlag(v) {
   return <span className="flag flag-zero">{v}</span>;
 }
 
+function incomingFlag(v) {
+  if (v > 0) return <span className="flag flag-ok">{v}</span>;
+  return <span className="flag flag-zero">{v}</span>;
+}
+
 function poleSortValue(p) {
   if (!p) return -1;
   if (p.includes('/')) {
@@ -472,7 +477,7 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
                 <td>{p.ie_klasse || '—'}</td>
                 <td>{fmtMateriaal(p.materiaal, lang) || '—'}</td>
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
-                <td style={{ textAlign: 'right' }}>{p.inkomend}</td>
+                <td style={{ textAlign: 'right' }}>{incomingFlag(p.inkomend)}</td>
                 {toontPrijzen && <td style={{ textAlign: 'right' }}>{fmtPrijs(p.prijs_bruto)}</td>}
                 {toontPrijzen && <td style={{ textAlign: 'right', color: 'var(--steel)' }}>{fmtKorting(p.korting_percentage)}</td>}
                 {toontPrijzen && <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtPrijs(p.prijs_netto)}</td>}
