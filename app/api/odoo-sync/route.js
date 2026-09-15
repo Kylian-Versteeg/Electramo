@@ -14,7 +14,7 @@ export async function POST() {
     }
 
     const result = await syncStockUpdates(items, user.email);
-    return NextResponse.json({ ...result, totalFromOdoo: items.length });
+    return NextResponse.json({ ...result, totalFromOdoo: items.length, items });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Odoo-sync mislukt.' }, { status: 500 });
   }
