@@ -1,4 +1,5 @@
 import { createServerSupabase } from '../lib/supabaseServer';
+import { createAdminClient } from '../lib/supabaseAdmin';
 import VoorraadApp from '../components/VoorraadApp';
 
 export const dynamic = 'force-dynamic'; // altijd verse data, geen caching
@@ -8,7 +9,7 @@ export const dynamic = 'force-dynamic'; // altijd verse data, geen caching
 // specs als bearing_de, weight, hs_code etc. zou meesturen).
 const PRODUCT_COLUMNS = 'code, omschrijving, bouwgrootte, vermogen, polen, bouwvorm, volt, ie_klasse, materiaal, vrije_voorraad, inkomend, categorie, prijs_bruto_2023, prijs_bruto_2025, prijs_bruto_2025_b5';
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }) {
   const supabase = createServerSupabase();
 
   // Gebruiker ophalen en producten ophalen zijn onafhankelijk van elkaar —
@@ -18,15 +19,59 @@ export default async function HomePage() {
     supabase.from('products').select(PRODUCT_COLUMNS).order('code', { ascending: true }),
   ]);
 
-  let liveProducts = products || [];
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const isAdmin = !!user && adminEmails.includes((user.email || '').toLowerCase());
 
-  // --- Prijzen: bruto/netto per product o.b.v. het klantaccount ---
-  // De klanten/kortingen-tabellen hebben Row Level Security aan: met de
-  // ingelogde-gebruiker-client (hierboven, "supabase") krijgt iedere klant
-  // hier automatisch alléén zijn eigen rij terug, nooit die van een ander.
+  let liveProducts = products || [];
   let klant = null;
   let kortingenMap = {};
-  if (user?.email) {
+  let klantenLijst = [];
+  let bekekenAlsEmail = '';
+
+  if (isAdmin) {
+    // --- "Bekijk als klant"-modus (alleen beheerders) ---
+    // Beheerders mogen hier de prijslijst van een gekozen klantaccount bekijken
+    // (?as=email), om te zien wat die klant te zien krijgt. Omdat dit alleen
+    // voor beheerders geldt, gebruiken we hiervoor de admin-client (bypast
+    // RLS) i.p.v. de ingelogde-gebruiker-client, die anders alleen de eigen
+    // (niet-bestaande) klantrij van de beheerder zou teruggeven. Niet-
+    // beheerders komen deze tak nooit binnen — hun ?as= wordt genegeerd.
+    const admin = createAdminClient();
+    const { data: klantenLijstRows } = await admin
+      .from('klanten')
+      .select('email, naam')
+      .order('email', { ascending: true });
+    klantenLijst = klantenLijstRows || [];
+
+    bekekenAlsEmail = (searchParams?.as || '').toString().trim().toLowerCase();
+    const prijsVoorEmail = bekekenAlsEmail || (user.email || '').toLowerCase();
+
+    if (prijsVoorEmail) {
+      const { data: klantRow } = await admin
+        .from('klanten')
+        .select('*')
+        .eq('email', prijsVoorEmail)
+        .maybeSingle();
+
+      if (klantRow) {
+        klant = klantRow;
+        const { data: kortingenRows } = await admin
+          .from('kortingen')
+          .select('categorie, korting_percentage')
+          .eq('klant_id', klantRow.id);
+        (kortingenRows || []).forEach((k) => {
+          kortingenMap[k.categorie] = k.korting_percentage;
+        });
+      }
+    }
+  } else if (user?.email) {
+    // --- Prijzen: bruto/netto per product o.b.v. het eigen klantaccount ---
+    // De klanten/kortingen-tabellen hebben Row Level Security aan: met de
+    // ingelogde-gebruiker-client (hierboven, "supabase") krijgt iedere klant
+    // hier automatisch alléén zijn eigen rij terug, nooit die van een ander.
     const { data: klantRow } = await supabase
       .from('klanten')
       .select('*')
@@ -67,12 +112,6 @@ export default async function HomePage() {
     });
   }
 
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  const isAdmin = !!user && adminEmails.includes((user.email || '').toLowerCase());
-
   return (
     <VoorraadApp
       initialProducts={liveProducts}
@@ -83,6 +122,8 @@ export default async function HomePage() {
       toontPrijzen={!!klant}
       naamplaatActief={!!klant?.naamplaat_actief}
       naamplaatPrijs={klant?.naamplaat_actief ? Number(klant.naamplaat_prijs) : null}
+      klantenLijst={klantenLijst}
+      bekekenAlsEmail={bekekenAlsEmail}
     />
   );
 }

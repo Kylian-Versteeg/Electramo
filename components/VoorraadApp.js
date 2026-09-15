@@ -104,6 +104,9 @@ const TRANSLATIONS = {
     filterIeKlasse: 'IE klasse',
     filterMateriaal: 'Materiaal',
     filterFlens: 'Flenzen',
+    bekijkAlsLabel: 'Bekijk prijzen als',
+    mezelf: 'Mezelf (geen prijzen)',
+    bekekenAlsInfo: (email) => `Je bekijkt de prijzen zoals klant ${email} ze ziet.`,
     alle: 'Alle',
     ja: 'Ja',
     alleenOpVoorraad: 'Alleen op voorraad',
@@ -141,6 +144,9 @@ const TRANSLATIONS = {
     filterIeKlasse: 'IE class',
     filterMateriaal: 'Material',
     filterFlens: 'Flange',
+    bekijkAlsLabel: 'View prices as',
+    mezelf: 'Myself (no prices)',
+    bekekenAlsInfo: (email) => `You are viewing prices as customer ${email}.`,
     alle: 'All',
     ja: 'Yes',
     alleenOpVoorraad: 'In stock only',
@@ -178,6 +184,9 @@ const TRANSLATIONS = {
     filterIeKlasse: 'Classe IE',
     filterMateriaal: 'Matériau',
     filterFlens: 'Bride',
+    bekijkAlsLabel: 'Voir les prix en tant que',
+    mezelf: 'Moi-même (pas de prix)',
+    bekekenAlsInfo: (email) => `Vous consultez les prix comme le client ${email}.`,
     alle: 'Tous',
     ja: 'Oui',
     alleenOpVoorraad: 'En stock uniquement',
@@ -200,8 +209,12 @@ const TRANSLATIONS = {
   },
 };
 
-export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs }) {
+export default function VoorraadApp({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs, klantenLijst, bekekenAlsEmail }) {
   const router = useRouter();
+
+  function wisselBekekenAls(email) {
+    router.push(email ? `/?as=${encodeURIComponent(email)}` : '/');
+  }
   const [lang, setLang] = useState('nl');
   const t = TRANSLATIONS[lang];
   const [search, setSearch] = useState('');
@@ -321,6 +334,27 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
           <button className="btn" onClick={handleLogout}>{t.uitloggen}</button>
         </div>
       </header>
+
+      {isAdmin && klantenLijst && klantenLijst.length > 0 && (
+        <div className="panel" style={{ display: 'flex', alignItems: 'flex-end', gap: 14, flexWrap: 'wrap' }}>
+          <div className="filter-field" style={{ width: 280 }}>
+            <label>{t.bekijkAlsLabel}</label>
+            <select value={bekekenAlsEmail || ''} onChange={(e) => wisselBekekenAls(e.target.value)}>
+              <option value="">{t.mezelf}</option>
+              {klantenLijst.map((k) => (
+                <option key={k.email} value={k.email}>
+                  {k.naam ? `${k.naam} (${k.email})` : k.email}
+                </option>
+              ))}
+            </select>
+          </div>
+          {bekekenAlsEmail && (
+            <span style={{ fontSize: 13, color: 'var(--steel)', paddingBottom: 9 }}>
+              {t.bekekenAlsInfo(bekekenAlsEmail)}
+            </span>
+          )}
+        </div>
+      )}
 
       {loadError && (
         <div className="panel error">{t.konNietLaden}{loadError}</div>
