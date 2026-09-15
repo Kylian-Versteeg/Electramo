@@ -99,9 +99,9 @@ const TRANSLATIONS = {
     filterVolt: 'Volt',
     filterIeKlasse: 'IE klasse',
     filterMateriaal: 'Materiaal',
+    filterFlensBouwgrootte: 'Flens bouwgrootte',
     alle: 'Alle',
     alleenOpVoorraad: 'Alleen op voorraad',
-    alleenFlenzen: 'Alleen flenzen',
     wisFilters: 'Wis filters',
     allesWissen: 'Alles wissen',
     artikelenGevonden: 'artikelen gevonden',
@@ -135,9 +135,9 @@ const TRANSLATIONS = {
     filterVolt: 'Voltage',
     filterIeKlasse: 'IE class',
     filterMateriaal: 'Material',
+    filterFlensBouwgrootte: 'Flange size',
     alle: 'All',
     alleenOpVoorraad: 'In stock only',
-    alleenFlenzen: 'Flanges only',
     wisFilters: 'Clear filters',
     allesWissen: 'Clear all',
     artikelenGevonden: 'items found',
@@ -171,9 +171,9 @@ const TRANSLATIONS = {
     filterVolt: 'Tension',
     filterIeKlasse: 'Classe IE',
     filterMateriaal: 'Matériau',
+    filterFlensBouwgrootte: 'Taille de bride',
     alle: 'Tous',
     alleenOpVoorraad: 'En stock uniquement',
-    alleenFlenzen: 'Brides uniquement',
     wisFilters: 'Effacer les filtres',
     allesWissen: 'Tout effacer',
     artikelenGevonden: 'articles trouvés',
@@ -204,8 +204,8 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
   const [fVolt, setFVolt] = useState('');
   const [fIe, setFIe] = useState('');
   const [fMateriaal, setFMateriaal] = useState('');
+  const [fFlensBouw, setFFlensBouw] = useState('');
   const [onlyStock, setOnlyStock] = useState(false);
-  const [onlyFlens, setOnlyFlens] = useState(false);
 
   const products = useMemo(
     () => [...initialProducts].sort((a, b) => prefixPrioriteit(a.code) - prefixPrioriteit(b.code)),
@@ -218,36 +218,43 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
         const s = search.trim().toLowerCase();
         if (s && !((p.code || '').toLowerCase().includes(s) || (p.omschrijving || '').toLowerCase().includes(s))) return false;
       }
-      if (except !== 'bouwgrootte' && fBouw && p.bouwgrootte !== fBouw) return false;
+      // Bouwgrootte-filter geldt alleen voor motoren — flenzen hebben hun eigen
+      // aparte bouwgrootte-filter hieronder, zodat de twee lijsten niet mengen.
+      if (except !== 'bouwgrootte' && fBouw && (isFlens(p) || p.bouwgrootte !== fBouw)) return false;
       if (except !== 'polen' && fPolen && p.polen !== fPolen) return false;
       if (except !== 'bouwvorm' && fBvorm && p.bouwvorm !== fBvorm) return false;
       if (except !== 'vermogen' && fVermogen && p.vermogen !== fVermogen) return false;
       if (except !== 'volt' && fVolt && p.volt !== fVolt) return false;
       if (except !== 'ie_klasse' && fIe && p.ie_klasse !== fIe) return false;
       if (except !== 'materiaal' && fMateriaal && p.materiaal !== fMateriaal) return false;
+      if (except !== 'flensbouw' && fFlensBouw && (!isFlens(p) || p.bouwgrootte !== fFlensBouw)) return false;
       if (onlyStock && !(p.vrije_voorraad > 0)) return false;
-      if (onlyFlens && !isFlens(p)) return false;
       return true;
     });
   }
 
-  const bouwOptions = useMemo(() => sortValues('bouwgrootte', matchingExcept('bouwgrootte').map((p) => p.bouwgrootte)),
-    [products, search, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+  const bouwOptions = useMemo(() => sortValues('bouwgrootte', matchingExcept('bouwgrootte').filter((p) => !isFlens(p)).map((p) => p.bouwgrootte)),
+    [products, search, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, fFlensBouw, onlyStock]);
   const polenOptions = useMemo(() => sortValues('polen', matchingExcept('polen').map((p) => p.polen)),
-    [products, search, fBouw, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+    [products, search, fBouw, fBvorm, fVermogen, fVolt, fIe, fMateriaal, fFlensBouw, onlyStock]);
   const bvormOptions = useMemo(() => sortValues('bouwvorm', matchingExcept('bouwvorm').map((p) => p.bouwvorm)),
-    [products, search, fBouw, fPolen, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+    [products, search, fBouw, fPolen, fVermogen, fVolt, fIe, fMateriaal, fFlensBouw, onlyStock]);
   const vermogenOptions = useMemo(() => sortValues('vermogen', matchingExcept('vermogen').map((p) => p.vermogen)),
-    [products, search, fBouw, fPolen, fBvorm, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+    [products, search, fBouw, fPolen, fBvorm, fVolt, fIe, fMateriaal, fFlensBouw, onlyStock]);
   const voltOptions = useMemo(() => sortValues('volt', matchingExcept('volt').map((p) => p.volt)),
-    [products, search, fBouw, fPolen, fBvorm, fVermogen, fIe, fMateriaal, onlyStock, onlyFlens]);
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fIe, fMateriaal, fFlensBouw, onlyStock]);
   const ieOptions = useMemo(() => sortValues('ie_klasse', matchingExcept('ie_klasse').map((p) => p.ie_klasse)),
-    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fMateriaal, onlyStock, onlyFlens]);
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fMateriaal, fFlensBouw, onlyStock]);
   const materiaalOptions = useMemo(() => sortValues('materiaal', matchingExcept('materiaal').map((p) => p.materiaal)),
-    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, onlyStock, onlyFlens]);
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fFlensBouw, onlyStock]);
+  // Bouwgrootte-opties van flenzen (categorie 'flenzen') — losstaand van de
+  // motor-bouwgrootte hierboven, zodat flens-maten (bv. 100, 112, 90 zonder
+  // letter) niet meer tussen de motormaten staan.
+  const flensBouwOptions = useMemo(() => sortValues('bouwgrootte', matchingExcept('flensbouw').filter((p) => isFlens(p)).map((p) => p.bouwgrootte)),
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock]);
 
   const filtered = useMemo(() => matchingExcept(null),
-    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, onlyStock, onlyFlens]);
+    [products, search, fBouw, fPolen, fBvorm, fVermogen, fVolt, fIe, fMateriaal, fFlensBouw, onlyStock]);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -259,7 +266,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
   function resetFilters() {
     setSearch(''); setFBouw(''); setFPolen(''); setFBvorm('');
     setFVermogen(''); setFVolt(''); setFIe(''); setFMateriaal('');
-    setOnlyStock(false); setOnlyFlens(false);
+    setFFlensBouw(''); setOnlyStock(false);
   }
 
   const actieveFilters = [
@@ -271,8 +278,8 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
     fVolt && { label: `${t.filterVolt}: ${fVolt}`, clear: () => setFVolt('') },
     fIe && { label: `${t.filterIeKlasse}: ${fIe}`, clear: () => setFIe('') },
     fMateriaal && { label: `${t.filterMateriaal}: ${fmtMateriaal(fMateriaal, lang)}`, clear: () => setFMateriaal('') },
+    fFlensBouw && { label: `${t.filterFlensBouwgrootte}: ${fFlensBouw}`, clear: () => setFFlensBouw('') },
     onlyStock && { label: t.alleenOpVoorraad, clear: () => setOnlyStock(false) },
-    onlyFlens && { label: t.alleenFlenzen, clear: () => setOnlyFlens(false) },
   ].filter(Boolean);
 
   return (
@@ -344,6 +351,13 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             </select>
           </div>
           <div>
+            <label>{t.filterFlensBouwgrootte}</label>
+            <select value={fFlensBouw} onChange={(e) => setFFlensBouw(e.target.value)}>
+              <option value="">{t.alle}</option>
+              {flensBouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
             <label>{t.filterPolen}</label>
             <select value={fPolen} onChange={(e) => setFPolen(e.target.value)}>
               <option value="">{t.alle}</option>
@@ -387,14 +401,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
               style={{ width: 16, height: 16 }}
             />
             <label htmlFor="onlyStock" style={{ textTransform: 'none', fontWeight: 600 }}>{t.alleenOpVoorraad}</label>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input
-              type="checkbox" id="onlyFlens" checked={onlyFlens}
-              onChange={(e) => setOnlyFlens(e.target.checked)}
-              style={{ width: 16, height: 16 }}
-            />
-            <label htmlFor="onlyFlens" style={{ textTransform: 'none', fontWeight: 600 }}>{t.alleenFlenzen}</label>
           </div>
           <button className="btn" onClick={resetFilters}>
             {t.wisFilters}
