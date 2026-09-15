@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../lib/supabaseAdmin';
 import { requireAdmin } from '../../../lib/requireAdmin';
+import { syncStockUpdates } from '../../../lib/productSync';
 
 export async function GET() {
   const { errorResponse } = await requireAdmin();
@@ -28,56 +29,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Geen artikelen ontvangen.' }, { status: 400 });
   }
 
-  const admin = createAdminClient();
-
-  // 3. Bepaal welke codes al in de vaste lijst bestaan - alleen die mogen worden bijgewerkt.
-  const { data: existing, error: fetchError } = await admin.from('products').select('code');
-  if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 });
+  // 3-5. Matchen op code, bijwerken en loggen — gedeeld met de Odoo-sync.
+  try {
+    const result = await syncStockUpdates(items, user.email);
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
-  const existingCodes = new Set(existing.map((r) => r.code));
-
-  const toUpdate = items
-    .filter((it) => existingCodes.has(it.code))
-    .map((it) => ({
-      code: it.code,
-      vrije_voorraad: it.vrije_voorraad,
-      inkomend: it.inkomend,
-      updated_at: new Date().toISOString(),
-    }));
-  const ignoredCodes = items
-    .filter((it) => !existingCodes.has(it.code))
-    .map((it) => it.code);
-  const ignoredCount = ignoredCodes.length;
-
-  // 4. Werk alle artikelen in EEN keer bij (bulk upsert i.p.v. losse calls).
-  //    Alleen de kolommen code/vrije_voorraad/inkomend/updated_at worden aangeraakt;
-  //    alle andere gegevens (omschrijving, motorgegevens, etc.) blijven ongewijzigd.
-  let updatedCount = 0;
-  if (toUpdate.length > 0) {
-    const { error: upsertError, count } = await admin
-      .from('products')
-      .upsert(toUpdate, { onConflict: 'code', count: 'exact' });
-
-    if (upsertError) {
-      return NextResponse.json({ error: upsertError.message }, { status: 500 });
-    }
-    updatedCount = count ?? toUpdate.length;
-  }
-
-  // 5. Bewaar dit uploadmoment in de geschiedenis, zodat je later kan terugzien wanneer je hebt geüpload.
-  await admin.from('upload_log').insert({
-    user_email: user.email,
-    updated_count: updatedCount,
-    ignored_count: ignoredCount,
-    total_items: items.length,
-    total_codes: existingCodes.size,
-  });
-
-  return NextResponse.json({
-    updatedCount,
-    ignoredCount,
-    ignoredCodes,
-    totalCodes: existingCodes.size,
-  });
 }
