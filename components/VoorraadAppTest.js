@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabaseClient';
 import { LOGO_DATA_URI } from '../lib/logo';
@@ -79,50 +79,13 @@ function sortValues(field, arr) {
   return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
-// Wisselt één waarde in een multi-select filter aan/uit.
-function toggleWaarde(arr, waarde) {
-  return arr.includes(waarde) ? arr.filter((x) => x !== waarde) : [...arr, waarde];
-}
-
-// Herbruikbare multi-select filter: knop met aantal geselecteerd, eronder een
-// uitklapbaar paneel met aanklikbare opties (geen checkboxes). Elke klik op
-// een optie schakelt hem aan/uit én klapt het paneel meteen weer dicht — voor
-// nog een waarde klik je de knop opnieuw open. Zo blijft een eerder gekozen
-// waarde (bv. 2,2 kW) staan als je daarna nog een waarde (bv. 3 kW) kiest.
-function FilterMultiSelect({ label, options, selected, onToggle, formatOption, allLabel }) {
-  const detailsRef = useRef(null);
-
-  function kies(o) {
-    onToggle(o);
-    if (detailsRef.current) detailsRef.current.open = false;
-  }
-
-  const weergave = selected.length > 0 ? selected.map((v) => formatOption(v)).join(', ') : allLabel;
-
-  return (
-    <div>
-      <label>{label}</label>
-      <details className="multiselect" ref={detailsRef}>
-        <summary title={weergave}>{weergave}</summary>
-        <div className="multiselect-panel">
-          {options.length === 0 && (
-            <span className="multiselect-empty">{allLabel}</span>
-          )}
-          {options.map((o) => (
-            <button
-              key={o}
-              type="button"
-              className={selected.includes(o) ? 'multiselect-option selected' : 'multiselect-option'}
-              onClick={() => kies(o)}
-            >
-              <span className="multiselect-check">{selected.includes(o) ? '✓' : ''}</span>
-              {formatOption(o)}
-            </button>
-          ))}
-        </div>
-      </details>
-    </div>
-  );
+// Voegt een gekozen waarde toe aan de array voor die filter (als hij er nog
+// niet in zit) — i.p.v. de vorige keuze te vervangen, zoals een gewone
+// <select> zou doen. De select zelf blijft altijd "Alle" tonen (value=""),
+// de gekozen waarden worden zichtbaar als chips onder de filters.
+function voegToe(setter, waarde) {
+  if (!waarde) return;
+  setter((arr) => (arr.includes(waarde) ? arr : [...arr, waarde]));
 }
 
 // Vertalingen voor de taalswitch (NL/EN) — alleen UI-teksten, de data zelf
@@ -146,7 +109,6 @@ const TRANSLATIONS = {
     filterIeKlasse: 'IE klasse',
     filterMateriaal: 'Materiaal',
     alle: 'Alle',
-    geselecteerd: 'geselecteerd',
     alleenOpVoorraad: 'Alleen op voorraad',
     alleenFlenzen: 'Alleen flenzen',
     wisFilters: 'Wis filters',
@@ -183,7 +145,6 @@ const TRANSLATIONS = {
     filterIeKlasse: 'IE class',
     filterMateriaal: 'Material',
     alle: 'All',
-    geselecteerd: 'selected',
     alleenOpVoorraad: 'In stock only',
     alleenFlenzen: 'Flanges only',
     wisFilters: 'Clear filters',
@@ -220,7 +181,6 @@ const TRANSLATIONS = {
     filterIeKlasse: 'Classe IE',
     filterMateriaal: 'Matériau',
     alle: 'Tous',
-    geselecteerd: 'sélectionné(s)',
     alleenOpVoorraad: 'En stock uniquement',
     alleenFlenzen: 'Brides uniquement',
     wisFilters: 'Effacer les filtres',
@@ -385,62 +345,55 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
           style={{ marginBottom: 14 }}
         />
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <FilterMultiSelect
-            label={t.filterVermogen}
-            options={vermogenOptions}
-            selected={fVermogen}
-            onToggle={(o) => setFVermogen((arr) => toggleWaarde(arr, o))}
-            formatOption={t.kwLabel}
-            allLabel={t.alle}
-          />
-          <FilterMultiSelect
-            label={t.filterBouwgrootte}
-            options={bouwOptions}
-            selected={fBouw}
-            onToggle={(o) => setFBouw((arr) => toggleWaarde(arr, o))}
-            formatOption={(o) => o}
-            allLabel={t.alle}
-          />
-          <FilterMultiSelect
-            label={t.filterPolen}
-            options={polenOptions}
-            selected={fPolen}
-            onToggle={(o) => setFPolen((arr) => toggleWaarde(arr, o))}
-            formatOption={t.poligLabel}
-            allLabel={t.alle}
-          />
-          <FilterMultiSelect
-            label={t.filterBouwvorm}
-            options={bvormOptions}
-            selected={fBvorm}
-            onToggle={(o) => setFBvorm((arr) => toggleWaarde(arr, o))}
-            formatOption={(o) => o}
-            allLabel={t.alle}
-          />
-          <FilterMultiSelect
-            label={t.filterVolt}
-            options={voltOptions}
-            selected={fVolt}
-            onToggle={(o) => setFVolt((arr) => toggleWaarde(arr, o))}
-            formatOption={(o) => o}
-            allLabel={t.alle}
-          />
-          <FilterMultiSelect
-            label={t.filterIeKlasse}
-            options={ieOptions}
-            selected={fIe}
-            onToggle={(o) => setFIe((arr) => toggleWaarde(arr, o))}
-            formatOption={(o) => o}
-            allLabel={t.alle}
-          />
-          <FilterMultiSelect
-            label={t.filterMateriaal}
-            options={materiaalOptions}
-            selected={fMateriaal}
-            onToggle={(o) => setFMateriaal((arr) => toggleWaarde(arr, o))}
-            formatOption={(o) => fmtMateriaal(o, lang)}
-            allLabel={t.alle}
-          />
+          <div>
+            <label>{t.filterVermogen}</label>
+            <select value="" onChange={(e) => voegToe(setFVermogen, e.target.value)}>
+              <option value="">{t.alle}</option>
+              {vermogenOptions.filter((o) => !fVermogen.includes(o)).map((o) => <option key={o} value={o}>{t.kwLabel(o)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>{t.filterBouwgrootte}</label>
+            <select value="" onChange={(e) => voegToe(setFBouw, e.target.value)}>
+              <option value="">{t.alle}</option>
+              {bouwOptions.filter((o) => !fBouw.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>{t.filterPolen}</label>
+            <select value="" onChange={(e) => voegToe(setFPolen, e.target.value)}>
+              <option value="">{t.alle}</option>
+              {polenOptions.filter((o) => !fPolen.includes(o)).map((o) => <option key={o} value={o}>{t.poligLabel(o)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>{t.filterBouwvorm}</label>
+            <select value="" onChange={(e) => voegToe(setFBvorm, e.target.value)}>
+              <option value="">{t.alle}</option>
+              {bvormOptions.filter((o) => !fBvorm.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>{t.filterVolt}</label>
+            <select value="" onChange={(e) => voegToe(setFVolt, e.target.value)}>
+              <option value="">{t.alle}</option>
+              {voltOptions.filter((o) => !fVolt.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>{t.filterIeKlasse}</label>
+            <select value="" onChange={(e) => voegToe(setFIe, e.target.value)}>
+              <option value="">{t.alle}</option>
+              {ieOptions.filter((o) => !fIe.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>{t.filterMateriaal}</label>
+            <select value="" onChange={(e) => voegToe(setFMateriaal, e.target.value)}>
+              <option value="">{t.alle}</option>
+              {materiaalOptions.filter((o) => !fMateriaal.includes(o)).map((o) => <option key={o} value={o}>{fmtMateriaal(o, lang)}</option>)}
+            </select>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
