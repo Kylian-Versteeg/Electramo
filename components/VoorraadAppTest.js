@@ -79,6 +79,40 @@ function sortValues(field, arr) {
   return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
+// Wisselt één waarde in een multi-select filter aan/uit.
+function toggleWaarde(arr, waarde) {
+  return arr.includes(waarde) ? arr.filter((x) => x !== waarde) : [...arr, waarde];
+}
+
+// Herbruikbare multi-select filter: knop met aantal geselecteerd, eronder een
+// uitklapbaar paneel met checkboxes per optie. Zo blijft een eerder gekozen
+// waarde (bv. 2,2 kW) staan als je daarna nog een waarde (bv. 3 kW) aanvinkt.
+function FilterMultiSelect({ label, options, selected, onToggle, formatOption, allLabel, selectedLabel }) {
+  return (
+    <div>
+      <label>{label}</label>
+      <details className="multiselect">
+        <summary>{selected.length > 0 ? `${selected.length} ${selectedLabel}` : allLabel}</summary>
+        <div className="multiselect-panel">
+          {options.length === 0 && (
+            <span className="multiselect-empty">{allLabel}</span>
+          )}
+          {options.map((o) => (
+            <label key={o} className="multiselect-option">
+              <input
+                type="checkbox"
+                checked={selected.includes(o)}
+                onChange={() => onToggle(o)}
+              />
+              {formatOption(o)}
+            </label>
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
+
 // Vertalingen voor de taalswitch (NL/EN) — alleen UI-teksten, de data zelf
 // (artikelcodes, omschrijvingen uit de database) wordt niet vertaald.
 const TRANSLATIONS = {
@@ -100,6 +134,7 @@ const TRANSLATIONS = {
     filterIeKlasse: 'IE klasse',
     filterMateriaal: 'Materiaal',
     alle: 'Alle',
+    geselecteerd: 'geselecteerd',
     alleenOpVoorraad: 'Alleen op voorraad',
     alleenFlenzen: 'Alleen flenzen',
     wisFilters: 'Wis filters',
@@ -136,6 +171,7 @@ const TRANSLATIONS = {
     filterIeKlasse: 'IE class',
     filterMateriaal: 'Material',
     alle: 'All',
+    geselecteerd: 'selected',
     alleenOpVoorraad: 'In stock only',
     alleenFlenzen: 'Flanges only',
     wisFilters: 'Clear filters',
@@ -172,6 +208,7 @@ const TRANSLATIONS = {
     filterIeKlasse: 'Classe IE',
     filterMateriaal: 'Matériau',
     alle: 'Tous',
+    geselecteerd: 'sélectionné(s)',
     alleenOpVoorraad: 'En stock uniquement',
     alleenFlenzen: 'Brides uniquement',
     wisFilters: 'Effacer les filtres',
@@ -197,13 +234,13 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
   const [lang, setLang] = useState('nl');
   const t = TRANSLATIONS[lang];
   const [search, setSearch] = useState('');
-  const [fBouw, setFBouw] = useState('');
-  const [fPolen, setFPolen] = useState('');
-  const [fBvorm, setFBvorm] = useState('');
-  const [fVermogen, setFVermogen] = useState('');
-  const [fVolt, setFVolt] = useState('');
-  const [fIe, setFIe] = useState('');
-  const [fMateriaal, setFMateriaal] = useState('');
+  const [fBouw, setFBouw] = useState([]);
+  const [fPolen, setFPolen] = useState([]);
+  const [fBvorm, setFBvorm] = useState([]);
+  const [fVermogen, setFVermogen] = useState([]);
+  const [fVolt, setFVolt] = useState([]);
+  const [fIe, setFIe] = useState([]);
+  const [fMateriaal, setFMateriaal] = useState([]);
   const [onlyStock, setOnlyStock] = useState(false);
   const [onlyFlens, setOnlyFlens] = useState(false);
 
@@ -218,13 +255,13 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
         const s = search.trim().toLowerCase();
         if (s && !((p.code || '').toLowerCase().includes(s) || (p.omschrijving || '').toLowerCase().includes(s))) return false;
       }
-      if (except !== 'bouwgrootte' && fBouw && p.bouwgrootte !== fBouw) return false;
-      if (except !== 'polen' && fPolen && p.polen !== fPolen) return false;
-      if (except !== 'bouwvorm' && fBvorm && p.bouwvorm !== fBvorm) return false;
-      if (except !== 'vermogen' && fVermogen && p.vermogen !== fVermogen) return false;
-      if (except !== 'volt' && fVolt && p.volt !== fVolt) return false;
-      if (except !== 'ie_klasse' && fIe && p.ie_klasse !== fIe) return false;
-      if (except !== 'materiaal' && fMateriaal && p.materiaal !== fMateriaal) return false;
+      if (except !== 'bouwgrootte' && fBouw.length > 0 && !fBouw.includes(p.bouwgrootte)) return false;
+      if (except !== 'polen' && fPolen.length > 0 && !fPolen.includes(p.polen)) return false;
+      if (except !== 'bouwvorm' && fBvorm.length > 0 && !fBvorm.includes(p.bouwvorm)) return false;
+      if (except !== 'vermogen' && fVermogen.length > 0 && !fVermogen.includes(p.vermogen)) return false;
+      if (except !== 'volt' && fVolt.length > 0 && !fVolt.includes(p.volt)) return false;
+      if (except !== 'ie_klasse' && fIe.length > 0 && !fIe.includes(p.ie_klasse)) return false;
+      if (except !== 'materiaal' && fMateriaal.length > 0 && !fMateriaal.includes(p.materiaal)) return false;
       if (onlyStock && !(p.vrije_voorraad > 0)) return false;
       if (onlyFlens && !isFlens(p)) return false;
       return true;
@@ -257,23 +294,30 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
   }
 
   function resetFilters() {
-    setSearch(''); setFBouw(''); setFPolen(''); setFBvorm('');
-    setFVermogen(''); setFVolt(''); setFIe(''); setFMateriaal('');
+    setSearch(''); setFBouw([]); setFPolen([]); setFBvorm([]);
+    setFVermogen([]); setFVolt([]); setFIe([]); setFMateriaal([]);
     setOnlyStock(false); setOnlyFlens(false);
   }
 
+  function chipsFor(values, setter, formatValue, filterLabel) {
+    return values.map((v) => ({
+      label: `${filterLabel}: ${formatValue(v)}`,
+      clear: () => setter((arr) => arr.filter((x) => x !== v)),
+    }));
+  }
+
   const actieveFilters = [
-    search && { label: t.zoekenChip(search), clear: () => setSearch('') },
-    fVermogen && { label: `${t.filterVermogen}: ${t.kwLabel(fVermogen)}`, clear: () => setFVermogen('') },
-    fBouw && { label: `${t.filterBouwgrootte}: ${fBouw}`, clear: () => setFBouw('') },
-    fPolen && { label: `${t.filterPolen}: ${t.poligLabel(fPolen)}`, clear: () => setFPolen('') },
-    fBvorm && { label: `${t.filterBouwvorm}: ${fBvorm}`, clear: () => setFBvorm('') },
-    fVolt && { label: `${t.filterVolt}: ${fVolt}`, clear: () => setFVolt('') },
-    fIe && { label: `${t.filterIeKlasse}: ${fIe}`, clear: () => setFIe('') },
-    fMateriaal && { label: `${t.filterMateriaal}: ${fmtMateriaal(fMateriaal, lang)}`, clear: () => setFMateriaal('') },
-    onlyStock && { label: t.alleenOpVoorraad, clear: () => setOnlyStock(false) },
-    onlyFlens && { label: t.alleenFlenzen, clear: () => setOnlyFlens(false) },
-  ].filter(Boolean);
+    ...(search ? [{ label: t.zoekenChip(search), clear: () => setSearch('') }] : []),
+    ...chipsFor(fVermogen, setFVermogen, t.kwLabel, t.filterVermogen),
+    ...chipsFor(fBouw, setFBouw, (v) => v, t.filterBouwgrootte),
+    ...chipsFor(fPolen, setFPolen, t.poligLabel, t.filterPolen),
+    ...chipsFor(fBvorm, setFBvorm, (v) => v, t.filterBouwvorm),
+    ...chipsFor(fVolt, setFVolt, (v) => v, t.filterVolt),
+    ...chipsFor(fIe, setFIe, (v) => v, t.filterIeKlasse),
+    ...chipsFor(fMateriaal, setFMateriaal, (v) => fmtMateriaal(v, lang), t.filterMateriaal),
+    ...(onlyStock ? [{ label: t.alleenOpVoorraad, clear: () => setOnlyStock(false) }] : []),
+    ...(onlyFlens ? [{ label: t.alleenFlenzen, clear: () => setOnlyFlens(false) }] : []),
+  ];
 
   return (
     <div className="wrap wrap-breed">
@@ -329,55 +373,69 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
           style={{ marginBottom: 14 }}
         />
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div>
-            <label>{t.filterVermogen}</label>
-            <select value={fVermogen} onChange={(e) => setFVermogen(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {vermogenOptions.map((o) => <option key={o} value={o}>{t.kwLabel(o)}</option>)}
-            </select>
-          </div>
-          <div>
-            <label>{t.filterBouwgrootte}</label>
-            <select value={fBouw} onChange={(e) => setFBouw(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {bouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <div>
-            <label>{t.filterPolen}</label>
-            <select value={fPolen} onChange={(e) => setFPolen(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {polenOptions.map((o) => <option key={o} value={o}>{t.poligLabel(o)}</option>)}
-            </select>
-          </div>
-          <div>
-            <label>{t.filterBouwvorm}</label>
-            <select value={fBvorm} onChange={(e) => setFBvorm(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {bvormOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <div>
-            <label>{t.filterVolt}</label>
-            <select value={fVolt} onChange={(e) => setFVolt(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {voltOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <div>
-            <label>{t.filterIeKlasse}</label>
-            <select value={fIe} onChange={(e) => setFIe(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {ieOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <div>
-            <label>{t.filterMateriaal}</label>
-            <select value={fMateriaal} onChange={(e) => setFMateriaal(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {materiaalOptions.map((o) => <option key={o} value={o}>{fmtMateriaal(o, lang)}</option>)}
-            </select>
-          </div>
+          <FilterMultiSelect
+            label={t.filterVermogen}
+            options={vermogenOptions}
+            selected={fVermogen}
+            onToggle={(o) => setFVermogen((arr) => toggleWaarde(arr, o))}
+            formatOption={t.kwLabel}
+            allLabel={t.alle}
+            selectedLabel={t.geselecteerd}
+          />
+          <FilterMultiSelect
+            label={t.filterBouwgrootte}
+            options={bouwOptions}
+            selected={fBouw}
+            onToggle={(o) => setFBouw((arr) => toggleWaarde(arr, o))}
+            formatOption={(o) => o}
+            allLabel={t.alle}
+            selectedLabel={t.geselecteerd}
+          />
+          <FilterMultiSelect
+            label={t.filterPolen}
+            options={polenOptions}
+            selected={fPolen}
+            onToggle={(o) => setFPolen((arr) => toggleWaarde(arr, o))}
+            formatOption={t.poligLabel}
+            allLabel={t.alle}
+            selectedLabel={t.geselecteerd}
+          />
+          <FilterMultiSelect
+            label={t.filterBouwvorm}
+            options={bvormOptions}
+            selected={fBvorm}
+            onToggle={(o) => setFBvorm((arr) => toggleWaarde(arr, o))}
+            formatOption={(o) => o}
+            allLabel={t.alle}
+            selectedLabel={t.geselecteerd}
+          />
+          <FilterMultiSelect
+            label={t.filterVolt}
+            options={voltOptions}
+            selected={fVolt}
+            onToggle={(o) => setFVolt((arr) => toggleWaarde(arr, o))}
+            formatOption={(o) => o}
+            allLabel={t.alle}
+            selectedLabel={t.geselecteerd}
+          />
+          <FilterMultiSelect
+            label={t.filterIeKlasse}
+            options={ieOptions}
+            selected={fIe}
+            onToggle={(o) => setFIe((arr) => toggleWaarde(arr, o))}
+            formatOption={(o) => o}
+            allLabel={t.alle}
+            selectedLabel={t.geselecteerd}
+          />
+          <FilterMultiSelect
+            label={t.filterMateriaal}
+            options={materiaalOptions}
+            selected={fMateriaal}
+            onToggle={(o) => setFMateriaal((arr) => toggleWaarde(arr, o))}
+            formatOption={(o) => fmtMateriaal(o, lang)}
+            allLabel={t.alle}
+            selectedLabel={t.geselecteerd}
+          />
         </div>
         <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
