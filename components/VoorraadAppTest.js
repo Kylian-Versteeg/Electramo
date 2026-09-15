@@ -89,7 +89,7 @@ function toggleWaarde(arr, waarde) {
 // een optie schakelt hem aan/uit én klapt het paneel meteen weer dicht — voor
 // nog een waarde klik je de knop opnieuw open. Zo blijft een eerder gekozen
 // waarde (bv. 2,2 kW) staan als je daarna nog een waarde (bv. 3 kW) kiest.
-function FilterMultiSelect({ label, options, selected, onToggle, formatOption, allLabel, selectedLabel }) {
+function FilterMultiSelect({ label, options, selected, onToggle, formatOption, allLabel }) {
   const detailsRef = useRef(null);
 
   function kies(o) {
@@ -97,11 +97,13 @@ function FilterMultiSelect({ label, options, selected, onToggle, formatOption, a
     if (detailsRef.current) detailsRef.current.open = false;
   }
 
+  const weergave = selected.length > 0 ? selected.map((v) => formatOption(v)).join(', ') : allLabel;
+
   return (
     <div>
       <label>{label}</label>
       <details className="multiselect" ref={detailsRef}>
-        <summary>{selected.length > 0 ? `${selected.length} ${selectedLabel}` : allLabel}</summary>
+        <summary title={weergave}>{weergave}</summary>
         <div className="multiselect-panel">
           {options.length === 0 && (
             <span className="multiselect-empty">{allLabel}</span>
@@ -390,7 +392,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             onToggle={(o) => setFVermogen((arr) => toggleWaarde(arr, o))}
             formatOption={t.kwLabel}
             allLabel={t.alle}
-            selectedLabel={t.geselecteerd}
           />
           <FilterMultiSelect
             label={t.filterBouwgrootte}
@@ -399,7 +400,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             onToggle={(o) => setFBouw((arr) => toggleWaarde(arr, o))}
             formatOption={(o) => o}
             allLabel={t.alle}
-            selectedLabel={t.geselecteerd}
           />
           <FilterMultiSelect
             label={t.filterPolen}
@@ -408,7 +408,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             onToggle={(o) => setFPolen((arr) => toggleWaarde(arr, o))}
             formatOption={t.poligLabel}
             allLabel={t.alle}
-            selectedLabel={t.geselecteerd}
           />
           <FilterMultiSelect
             label={t.filterBouwvorm}
@@ -417,7 +416,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             onToggle={(o) => setFBvorm((arr) => toggleWaarde(arr, o))}
             formatOption={(o) => o}
             allLabel={t.alle}
-            selectedLabel={t.geselecteerd}
           />
           <FilterMultiSelect
             label={t.filterVolt}
@@ -426,7 +424,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             onToggle={(o) => setFVolt((arr) => toggleWaarde(arr, o))}
             formatOption={(o) => o}
             allLabel={t.alle}
-            selectedLabel={t.geselecteerd}
           />
           <FilterMultiSelect
             label={t.filterIeKlasse}
@@ -435,7 +432,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             onToggle={(o) => setFIe((arr) => toggleWaarde(arr, o))}
             formatOption={(o) => o}
             allLabel={t.alle}
-            selectedLabel={t.geselecteerd}
           />
           <FilterMultiSelect
             label={t.filterMateriaal}
@@ -444,7 +440,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             onToggle={(o) => setFMateriaal((arr) => toggleWaarde(arr, o))}
             formatOption={(o) => fmtMateriaal(o, lang)}
             allLabel={t.alle}
-            selectedLabel={t.geselecteerd}
           />
         </div>
         <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>

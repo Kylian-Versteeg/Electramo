@@ -118,18 +118,19 @@ tbody tr:hover { background: #f5f8fa; }
 .lang-switch button.active { background: var(--ink); color: #fff; }
 .lang-switch button.active:hover { background: var(--ink); }
 
-/* ---- multi-select filter (klik-dropdown) ---- */
+/* ---- multi-select filter (zelfde uiterlijk als een gewone <select>) ---- */
 .multiselect { position: relative; }
 .multiselect summary {
   list-style: none; cursor: pointer; user-select: none;
   border: 1px solid var(--line); border-radius: 7px; padding: 9px 12px;
-  font-size: 14px; background: #fff; min-width: 130px;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 14px; width: 100%; font-family: var(--sans); background: #fff;
+  color: var(--ink);
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .multiselect summary::-webkit-details-marker { display: none; }
-.multiselect summary::after { content: '▾'; color: var(--steel-light); font-size: 11px; flex: none; }
+.multiselect summary::after { content: '▾'; color: var(--steel-light); font-size: 10px; flex: none; }
 .multiselect[open] summary::after { content: '▴'; }
-.multiselect[open] summary { border-color: var(--steel-light); }
 .multiselect-panel {
   position: absolute; top: calc(100% + 4px); left: 0; z-index: 5;
   background: #fff; border: 1px solid var(--line); border-radius: 8px;
@@ -143,6 +144,6 @@ tbody tr:hover { background: #f5f8fa; }
   border: none; background: transparent; text-align: left; font-family: var(--sans);
 }
 .multiselect-option:hover { background: var(--bg); }
-.multiselect-option.selected { background: var(--ok-bg); color: var(--ok); font-weight: 700; }
+.multiselect-option.selected { font-weight: 700; }
 .multiselect-check { width: 13px; flex: none; font-size: 12px; }
 .multiselect-empty { display: block; padding: 6px 8px; font-size: 12.5px; color: var(--steel-light); }
