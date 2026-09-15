@@ -1,20 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabase } from '../../../lib/supabaseServer';
 import { createAdminClient } from '../../../lib/supabaseAdmin';
-
-async function requireAdmin() {
-  const supabase = createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { errorResponse: NextResponse.json({ error: 'Niet ingelogd.' }, { status: 401 }) };
-  }
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-  if (!adminEmails.includes((user.email || '').toLowerCase())) {
-    return { errorResponse: NextResponse.json({ error: 'Geen beheerderstoegang.' }, { status: 403 }) };
-  }
-  return { user };
-}
+import { requireAdmin } from '../../../lib/requireAdmin';
 
 export async function GET() {
   const { errorResponse } = await requireAdmin();

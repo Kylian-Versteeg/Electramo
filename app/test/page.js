@@ -1,5 +1,6 @@
 import { createServerSupabase } from '../../lib/supabaseServer';
 import { createAdminClient } from '../../lib/supabaseAdmin';
+import { checkIsAdmin } from '../../lib/isAdmin';
 import { redirect } from 'next/navigation';
 import VoorraadAppTest from '../../components/VoorraadAppTest';
 
@@ -20,11 +21,7 @@ export default async function TestHomePage({ searchParams }) {
     supabase.from('products').select(PRODUCT_COLUMNS).order('code', { ascending: true }),
   ]);
 
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  const isAdmin = !!user && adminEmails.includes((user.email || '').toLowerCase());
+  const isAdmin = await checkIsAdmin(supabase, user);
 
   if (!isAdmin) {
     redirect('/');

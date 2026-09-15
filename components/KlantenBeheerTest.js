@@ -11,6 +11,7 @@ const LEEG_FORM = {
   kortingen: {},
   naamplaatActief: false,
   naamplaatPrijs: '',
+  isAdmin: false,
 };
 
 export default function KlantenBeheerTest() {
@@ -47,6 +48,7 @@ export default function KlantenBeheerTest() {
       kortingen: { ...klant.kortingen },
       naamplaatActief: !!klant.naamplaat_actief,
       naamplaatPrijs: klant.naamplaat_prijs ?? '',
+      isAdmin: !!klant.is_admin,
     });
     setStatus('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -100,6 +102,7 @@ export default function KlantenBeheerTest() {
           kortingen: form.kortingen,
           naamplaat_actief: form.naamplaatActief,
           naamplaat_prijs: form.naamplaatActief ? form.naamplaatPrijs : null,
+          is_admin: form.isAdmin,
         }),
       });
       const data = await res.json();
@@ -182,6 +185,17 @@ export default function KlantenBeheerTest() {
                 placeholder="bijv. 7.00"
               />
             </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={form.isAdmin}
+                  onChange={(e) => setForm((f) => ({ ...f, isAdmin: e.target.checked }))}
+                  style={{ marginRight: 6 }}
+                />
+                Beheerder
+              </label>
+            </div>
           </div>
 
           <label style={{ display: 'block', marginBottom: 10 }}>Korting per categorie (%)</label>
@@ -232,6 +246,7 @@ export default function KlantenBeheerTest() {
                 <th>Prijslijst</th>
                 <th>Categorieën met korting</th>
                 <th>Naamplaat</th>
+                <th>Beheerder</th>
                 <th></th>
               </tr>
             </thead>
@@ -243,6 +258,7 @@ export default function KlantenBeheerTest() {
                   <td>{k.prijslijst}</td>
                   <td>{Object.keys(k.kortingen).length} / {CATEGORIEEN.length}</td>
                   <td>{k.naamplaat_actief ? `Ja (€ ${k.naamplaat_prijs})` : '—'}</td>
+                  <td>{k.is_admin ? 'Ja' : '—'}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <button type="button" className="btn" onClick={() => bewerkKlant(k)} style={{ marginRight: 6 }}>
                       Bewerken

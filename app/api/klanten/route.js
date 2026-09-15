@@ -1,20 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabase } from '../../../lib/supabaseServer';
 import { createAdminClient } from '../../../lib/supabaseAdmin';
-
-async function requireAdmin() {
-  const supabase = createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { errorResponse: NextResponse.json({ error: 'Niet ingelogd.' }, { status: 401 }) };
-  }
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-  if (!adminEmails.includes((user.email || '').toLowerCase())) {
-    return { errorResponse: NextResponse.json({ error: 'Geen beheerderstoegang.' }, { status: 403 }) };
-  }
-  return { user };
-}
+import { requireAdmin } from '../../../lib/requireAdmin';
 
 export async function GET() {
   const { errorResponse } = await requireAdmin();
@@ -43,7 +29,7 @@ export async function POST(request) {
   if (errorResponse) return errorResponse;
 
   const body = await request.json();
-  const { email, naam, prijslijst, kortingen, naamplaat_actief, naamplaat_prijs } = body;
+  const { email, naam, prijslijst, kortingen, naamplaat_actief, naamplaat_prijs, is_admin } = body;
 
   if (!email || !prijslijst) {
     return NextResponse.json({ error: 'E-mailadres en prijslijst zijn verplicht.' }, { status: 400 });
@@ -66,6 +52,7 @@ export async function POST(request) {
         prijslijst: String(prijslijst),
         naamplaat_actief: !!naamplaat_actief,
         naamplaat_prijs: naamplaat_actief ? Number(naamplaat_prijs) : null,
+        is_admin: !!is_admin,
       },
       { onConflict: 'email' }
     )
