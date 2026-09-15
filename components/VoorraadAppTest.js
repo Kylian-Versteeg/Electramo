@@ -99,7 +99,7 @@ const TRANSLATIONS = {
     filterVolt: 'Volt',
     filterIeKlasse: 'IE klasse',
     filterMateriaal: 'Materiaal',
-    filterFlensBouwgrootte: 'Flens bouwgrootte',
+    filterFlens: 'Flens',
     alle: 'Alle',
     alleenOpVoorraad: 'Alleen op voorraad',
     wisFilters: 'Wis filters',
@@ -135,7 +135,7 @@ const TRANSLATIONS = {
     filterVolt: 'Voltage',
     filterIeKlasse: 'IE class',
     filterMateriaal: 'Material',
-    filterFlensBouwgrootte: 'Flange size',
+    filterFlens: 'Flange',
     alle: 'All',
     alleenOpVoorraad: 'In stock only',
     wisFilters: 'Clear filters',
@@ -171,7 +171,7 @@ const TRANSLATIONS = {
     filterVolt: 'Tension',
     filterIeKlasse: 'Classe IE',
     filterMateriaal: 'Matériau',
-    filterFlensBouwgrootte: 'Taille de bride',
+    filterFlens: 'Bride',
     alle: 'Tous',
     alleenOpVoorraad: 'En stock uniquement',
     wisFilters: 'Effacer les filtres',
@@ -278,7 +278,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
     fVolt && { label: `${t.filterVolt}: ${fVolt}`, clear: () => setFVolt('') },
     fIe && { label: `${t.filterIeKlasse}: ${fIe}`, clear: () => setFIe('') },
     fMateriaal && { label: `${t.filterMateriaal}: ${fmtMateriaal(fMateriaal, lang)}`, clear: () => setFMateriaal('') },
-    fFlensBouw && { label: `${t.filterFlensBouwgrootte}: ${fFlensBouw}`, clear: () => setFFlensBouw('') },
+    fFlensBouw && { label: `${t.filterFlens}: ${fFlensBouw}`, clear: () => setFFlensBouw('') },
     onlyStock && { label: t.alleenOpVoorraad, clear: () => setOnlyStock(false) },
   ].filter(Boolean);
 
@@ -344,17 +344,17 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             </select>
           </div>
           <div>
+            <label>{t.filterFlens}</label>
+            <select value={fFlensBouw} onChange={(e) => setFFlensBouw(e.target.value)}>
+              <option value="">{t.alle}</option>
+              {flensBouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
             <label>{t.filterBouwgrootte}</label>
             <select value={fBouw} onChange={(e) => setFBouw(e.target.value)}>
               <option value="">{t.alle}</option>
               {bouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <div>
-            <label>{t.filterFlensBouwgrootte}</label>
-            <select value={fFlensBouw} onChange={(e) => setFFlensBouw(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {flensBouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
