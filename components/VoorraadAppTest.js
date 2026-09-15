@@ -79,15 +79,6 @@ function sortValues(field, arr) {
   return unique.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
-// Voegt een gekozen waarde toe aan de array voor die filter (als hij er nog
-// niet in zit) — i.p.v. de vorige keuze te vervangen, zoals een gewone
-// <select> zou doen. De select zelf blijft altijd "Alle" tonen (value=""),
-// de gekozen waarden worden zichtbaar als chips onder de filters.
-function voegToe(setter, waarde) {
-  if (!waarde) return;
-  setter((arr) => (arr.includes(waarde) ? arr : [...arr, waarde]));
-}
-
 // Vertalingen voor de taalswitch (NL/EN) — alleen UI-teksten, de data zelf
 // (artikelcodes, omschrijvingen uit de database) wordt niet vertaald.
 const TRANSLATIONS = {
@@ -206,13 +197,13 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
   const [lang, setLang] = useState('nl');
   const t = TRANSLATIONS[lang];
   const [search, setSearch] = useState('');
-  const [fBouw, setFBouw] = useState([]);
-  const [fPolen, setFPolen] = useState([]);
-  const [fBvorm, setFBvorm] = useState([]);
-  const [fVermogen, setFVermogen] = useState([]);
-  const [fVolt, setFVolt] = useState([]);
-  const [fIe, setFIe] = useState([]);
-  const [fMateriaal, setFMateriaal] = useState([]);
+  const [fBouw, setFBouw] = useState('');
+  const [fPolen, setFPolen] = useState('');
+  const [fBvorm, setFBvorm] = useState('');
+  const [fVermogen, setFVermogen] = useState('');
+  const [fVolt, setFVolt] = useState('');
+  const [fIe, setFIe] = useState('');
+  const [fMateriaal, setFMateriaal] = useState('');
   const [onlyStock, setOnlyStock] = useState(false);
   const [onlyFlens, setOnlyFlens] = useState(false);
 
@@ -227,13 +218,13 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
         const s = search.trim().toLowerCase();
         if (s && !((p.code || '').toLowerCase().includes(s) || (p.omschrijving || '').toLowerCase().includes(s))) return false;
       }
-      if (except !== 'bouwgrootte' && fBouw.length > 0 && !fBouw.includes(p.bouwgrootte)) return false;
-      if (except !== 'polen' && fPolen.length > 0 && !fPolen.includes(p.polen)) return false;
-      if (except !== 'bouwvorm' && fBvorm.length > 0 && !fBvorm.includes(p.bouwvorm)) return false;
-      if (except !== 'vermogen' && fVermogen.length > 0 && !fVermogen.includes(p.vermogen)) return false;
-      if (except !== 'volt' && fVolt.length > 0 && !fVolt.includes(p.volt)) return false;
-      if (except !== 'ie_klasse' && fIe.length > 0 && !fIe.includes(p.ie_klasse)) return false;
-      if (except !== 'materiaal' && fMateriaal.length > 0 && !fMateriaal.includes(p.materiaal)) return false;
+      if (except !== 'bouwgrootte' && fBouw && p.bouwgrootte !== fBouw) return false;
+      if (except !== 'polen' && fPolen && p.polen !== fPolen) return false;
+      if (except !== 'bouwvorm' && fBvorm && p.bouwvorm !== fBvorm) return false;
+      if (except !== 'vermogen' && fVermogen && p.vermogen !== fVermogen) return false;
+      if (except !== 'volt' && fVolt && p.volt !== fVolt) return false;
+      if (except !== 'ie_klasse' && fIe && p.ie_klasse !== fIe) return false;
+      if (except !== 'materiaal' && fMateriaal && p.materiaal !== fMateriaal) return false;
       if (onlyStock && !(p.vrije_voorraad > 0)) return false;
       if (onlyFlens && !isFlens(p)) return false;
       return true;
@@ -266,30 +257,23 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
   }
 
   function resetFilters() {
-    setSearch(''); setFBouw([]); setFPolen([]); setFBvorm([]);
-    setFVermogen([]); setFVolt([]); setFIe([]); setFMateriaal([]);
+    setSearch(''); setFBouw(''); setFPolen(''); setFBvorm('');
+    setFVermogen(''); setFVolt(''); setFIe(''); setFMateriaal('');
     setOnlyStock(false); setOnlyFlens(false);
   }
 
-  function chipsFor(values, setter, formatValue, filterLabel) {
-    return values.map((v) => ({
-      label: `${filterLabel}: ${formatValue(v)}`,
-      clear: () => setter((arr) => arr.filter((x) => x !== v)),
-    }));
-  }
-
   const actieveFilters = [
-    ...(search ? [{ label: t.zoekenChip(search), clear: () => setSearch('') }] : []),
-    ...chipsFor(fVermogen, setFVermogen, t.kwLabel, t.filterVermogen),
-    ...chipsFor(fBouw, setFBouw, (v) => v, t.filterBouwgrootte),
-    ...chipsFor(fPolen, setFPolen, t.poligLabel, t.filterPolen),
-    ...chipsFor(fBvorm, setFBvorm, (v) => v, t.filterBouwvorm),
-    ...chipsFor(fVolt, setFVolt, (v) => v, t.filterVolt),
-    ...chipsFor(fIe, setFIe, (v) => v, t.filterIeKlasse),
-    ...chipsFor(fMateriaal, setFMateriaal, (v) => fmtMateriaal(v, lang), t.filterMateriaal),
-    ...(onlyStock ? [{ label: t.alleenOpVoorraad, clear: () => setOnlyStock(false) }] : []),
-    ...(onlyFlens ? [{ label: t.alleenFlenzen, clear: () => setOnlyFlens(false) }] : []),
-  ];
+    search && { label: t.zoekenChip(search), clear: () => setSearch('') },
+    fVermogen && { label: `${t.filterVermogen}: ${t.kwLabel(fVermogen)}`, clear: () => setFVermogen('') },
+    fBouw && { label: `${t.filterBouwgrootte}: ${fBouw}`, clear: () => setFBouw('') },
+    fPolen && { label: `${t.filterPolen}: ${t.poligLabel(fPolen)}`, clear: () => setFPolen('') },
+    fBvorm && { label: `${t.filterBouwvorm}: ${fBvorm}`, clear: () => setFBvorm('') },
+    fVolt && { label: `${t.filterVolt}: ${fVolt}`, clear: () => setFVolt('') },
+    fIe && { label: `${t.filterIeKlasse}: ${fIe}`, clear: () => setFIe('') },
+    fMateriaal && { label: `${t.filterMateriaal}: ${fmtMateriaal(fMateriaal, lang)}`, clear: () => setFMateriaal('') },
+    onlyStock && { label: t.alleenOpVoorraad, clear: () => setOnlyStock(false) },
+    onlyFlens && { label: t.alleenFlenzen, clear: () => setOnlyFlens(false) },
+  ].filter(Boolean);
 
   return (
     <div className="wrap wrap-breed">
@@ -347,51 +331,51 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div>
             <label>{t.filterVermogen}</label>
-            <select value="" onChange={(e) => voegToe(setFVermogen, e.target.value)}>
+            <select value={fVermogen} onChange={(e) => setFVermogen(e.target.value)}>
               <option value="">{t.alle}</option>
-              {vermogenOptions.filter((o) => !fVermogen.includes(o)).map((o) => <option key={o} value={o}>{t.kwLabel(o)}</option>)}
+              {vermogenOptions.map((o) => <option key={o} value={o}>{t.kwLabel(o)}</option>)}
             </select>
           </div>
           <div>
             <label>{t.filterBouwgrootte}</label>
-            <select value="" onChange={(e) => voegToe(setFBouw, e.target.value)}>
+            <select value={fBouw} onChange={(e) => setFBouw(e.target.value)}>
               <option value="">{t.alle}</option>
-              {bouwOptions.filter((o) => !fBouw.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+              {bouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label>{t.filterPolen}</label>
-            <select value="" onChange={(e) => voegToe(setFPolen, e.target.value)}>
+            <select value={fPolen} onChange={(e) => setFPolen(e.target.value)}>
               <option value="">{t.alle}</option>
-              {polenOptions.filter((o) => !fPolen.includes(o)).map((o) => <option key={o} value={o}>{t.poligLabel(o)}</option>)}
+              {polenOptions.map((o) => <option key={o} value={o}>{t.poligLabel(o)}</option>)}
             </select>
           </div>
           <div>
             <label>{t.filterBouwvorm}</label>
-            <select value="" onChange={(e) => voegToe(setFBvorm, e.target.value)}>
+            <select value={fBvorm} onChange={(e) => setFBvorm(e.target.value)}>
               <option value="">{t.alle}</option>
-              {bvormOptions.filter((o) => !fBvorm.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+              {bvormOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label>{t.filterVolt}</label>
-            <select value="" onChange={(e) => voegToe(setFVolt, e.target.value)}>
+            <select value={fVolt} onChange={(e) => setFVolt(e.target.value)}>
               <option value="">{t.alle}</option>
-              {voltOptions.filter((o) => !fVolt.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+              {voltOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label>{t.filterIeKlasse}</label>
-            <select value="" onChange={(e) => voegToe(setFIe, e.target.value)}>
+            <select value={fIe} onChange={(e) => setFIe(e.target.value)}>
               <option value="">{t.alle}</option>
-              {ieOptions.filter((o) => !fIe.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+              {ieOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label>{t.filterMateriaal}</label>
-            <select value="" onChange={(e) => voegToe(setFMateriaal, e.target.value)}>
+            <select value={fMateriaal} onChange={(e) => setFMateriaal(e.target.value)}>
               <option value="">{t.alle}</option>
-              {materiaalOptions.filter((o) => !fMateriaal.includes(o)).map((o) => <option key={o} value={o}>{fmtMateriaal(o, lang)}</option>)}
+              {materiaalOptions.map((o) => <option key={o} value={o}>{fmtMateriaal(o, lang)}</option>)}
             </select>
           </div>
         </div>
