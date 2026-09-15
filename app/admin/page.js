@@ -1,16 +1,12 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '../../lib/supabaseServer';
+import { checkIsAdmin } from '../../lib/isAdmin';
 import AdminUpload from '../../components/AdminUpload';
 
 export default async function AdminPage() {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
-
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  const isAdmin = !!user && adminEmails.includes((user.email || '').toLowerCase());
+  const isAdmin = await checkIsAdmin(supabase, user);
 
   if (!isAdmin) {
     redirect('/');

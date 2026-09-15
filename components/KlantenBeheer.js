@@ -5,12 +5,14 @@ import { CATEGORIEEN } from '../lib/categorieen';
 
 const LEEG_FORM = {
   id: null,
+  bedrijf: '',
   email: '',
   naam: '',
   prijslijst: '2025',
   kortingen: {},
   naamplaatActief: false,
   naamplaatPrijs: '',
+  isAdmin: false,
 };
 
 export default function KlantenBeheer() {
@@ -41,12 +43,14 @@ export default function KlantenBeheer() {
   function bewerkKlant(klant) {
     setForm({
       id: klant.id,
+      bedrijf: klant.bedrijf || '',
       email: klant.email,
       naam: klant.naam || '',
       prijslijst: klant.prijslijst,
       kortingen: { ...klant.kortingen },
       naamplaatActief: !!klant.naamplaat_actief,
       naamplaatPrijs: klant.naamplaat_prijs ?? '',
+      isAdmin: !!klant.is_admin,
     });
     setStatus('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -94,12 +98,14 @@ export default function KlantenBeheer() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          bedrijf: form.bedrijf,
           email: form.email,
           naam: form.naam,
           prijslijst: form.prijslijst,
           kortingen: form.kortingen,
           naamplaat_actief: form.naamplaatActief,
           naamplaat_prijs: form.naamplaatActief ? form.naamplaatPrijs : null,
+          is_admin: form.isAdmin,
         }),
       });
       const data = await res.json();
@@ -122,6 +128,14 @@ export default function KlantenBeheer() {
         <h2 style={{ marginTop: 0 }}>{form.id ? `Klant bewerken: ${form.email}` : 'Nieuwe klant toevoegen'}</h2>
         <form onSubmit={opslaan}>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div style={{ flex: '1 1 200px' }}>
+              <label>Bedrijf</label>
+              <input
+                type="text" value={form.bedrijf}
+                onChange={(e) => setForm((f) => ({ ...f, bedrijf: e.target.value }))}
+                placeholder="Klant BV"
+              />
+            </div>
             <div style={{ flex: '1 1 260px' }}>
               <label>E-mailadres (inlog)</label>
               <input
@@ -182,6 +196,17 @@ export default function KlantenBeheer() {
                 placeholder="bijv. 7.00"
               />
             </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={form.isAdmin}
+                  onChange={(e) => setForm((f) => ({ ...f, isAdmin: e.target.checked }))}
+                  style={{ marginRight: 6 }}
+                />
+                Beheerder
+              </label>
+            </div>
           </div>
 
           <label style={{ display: 'block', marginBottom: 10 }}>Korting per categorie (%)</label>
@@ -227,22 +252,26 @@ export default function KlantenBeheer() {
           <table>
             <thead>
               <tr>
+                <th>Bedrijf</th>
                 <th>E-mailadres</th>
                 <th>Naam</th>
                 <th>Prijslijst</th>
                 <th>Categorieën met korting</th>
                 <th>Naamplaat</th>
+                <th>Beheerder</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {klanten.map((k) => (
                 <tr key={k.id}>
+                  <td>{k.bedrijf || '—'}</td>
                   <td>{k.email}</td>
                   <td>{k.naam || '—'}</td>
                   <td>{k.prijslijst}</td>
                   <td>{Object.keys(k.kortingen).length} / {CATEGORIEEN.length}</td>
                   <td>{k.naamplaat_actief ? `Ja (€ ${k.naamplaat_prijs})` : '—'}</td>
+                  <td>{k.is_admin ? 'Ja' : '—'}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <button type="button" className="btn" onClick={() => bewerkKlant(k)} style={{ marginRight: 6 }}>
                       Bewerken

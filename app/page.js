@@ -1,5 +1,6 @@
 import { createServerSupabase } from '../lib/supabaseServer';
 import { createAdminClient } from '../lib/supabaseAdmin';
+import { checkIsAdmin } from '../lib/isAdmin';
 import VoorraadApp from '../components/VoorraadApp';
 
 export const dynamic = 'force-dynamic'; // altijd verse data, geen caching
@@ -19,11 +20,7 @@ export default async function HomePage({ searchParams }) {
     supabase.from('products').select(PRODUCT_COLUMNS).order('code', { ascending: true }),
   ]);
 
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  const isAdmin = !!user && adminEmails.includes((user.email || '').toLowerCase());
+  const isAdmin = await checkIsAdmin(supabase, user);
 
   let liveProducts = products || [];
   let klant = null;
@@ -42,7 +39,7 @@ export default async function HomePage({ searchParams }) {
     const admin = createAdminClient();
     const { data: klantenLijstRows } = await admin
       .from('klanten')
-      .select('email, naam')
+      .select('email, naam, bedrijf')
       .order('email', { ascending: true });
     klantenLijst = klantenLijstRows || [];
 
@@ -124,6 +121,7 @@ export default async function HomePage({ searchParams }) {
       naamplaatPrijs={klant?.naamplaat_actief ? Number(klant.naamplaat_prijs) : null}
       klantenLijst={klantenLijst}
       bekekenAlsEmail={bekekenAlsEmail}
+      weergaveNaam={klant?.bedrijf || null}
     />
   );
 }

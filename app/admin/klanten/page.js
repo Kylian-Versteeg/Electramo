@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '../../../lib/supabaseServer';
+import { checkIsAdmin } from '../../../lib/isAdmin';
 import KlantenBeheer from '../../../components/KlantenBeheer';
 
 export const dynamic = 'force-dynamic';
@@ -7,10 +8,7 @@ export const dynamic = 'force-dynamic';
 export default async function KlantenPage() {
   const supabase = createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
-
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-  const isAdmin = !!user && adminEmails.includes((user.email || '').toLowerCase());
+  const isAdmin = await checkIsAdmin(supabase, user);
 
   if (!isAdmin) {
     redirect('/');
