@@ -38,7 +38,7 @@ export default async function TestHomePage({ searchParams }) {
   const admin = createAdminClient();
   const { data: klantenLijstRows } = await admin
     .from('klanten')
-    .select('email, naam')
+    .select('email, naam, bedrijf')
     .order('email', { ascending: true });
   const klantenLijst = klantenLijstRows || [];
 
@@ -101,6 +101,7 @@ export default async function TestHomePage({ searchParams }) {
       naamplaatPrijs={klant?.naamplaat_actief ? Number(klant.naamplaat_prijs) : null}
       klantenLijst={klantenLijst}
       bekekenAlsEmail={bekekenAlsEmail}
+      weergaveNaam={klant?.bedrijf || null}
     />
   );
 }

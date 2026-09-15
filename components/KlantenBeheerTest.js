@@ -5,6 +5,7 @@ import { CATEGORIEEN } from '../lib/categorieen';
 
 const LEEG_FORM = {
   id: null,
+  bedrijf: '',
   email: '',
   naam: '',
   prijslijst: '2025',
@@ -42,6 +43,7 @@ export default function KlantenBeheerTest() {
   function bewerkKlant(klant) {
     setForm({
       id: klant.id,
+      bedrijf: klant.bedrijf || '',
       email: klant.email,
       naam: klant.naam || '',
       prijslijst: klant.prijslijst,
@@ -96,6 +98,7 @@ export default function KlantenBeheerTest() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          bedrijf: form.bedrijf,
           email: form.email,
           naam: form.naam,
           prijslijst: form.prijslijst,
@@ -125,6 +128,14 @@ export default function KlantenBeheerTest() {
         <h2 style={{ marginTop: 0 }}>{form.id ? `Klant bewerken: ${form.email}` : 'Nieuwe klant toevoegen'}</h2>
         <form onSubmit={opslaan}>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div style={{ flex: '1 1 200px' }}>
+              <label>Bedrijf</label>
+              <input
+                type="text" value={form.bedrijf}
+                onChange={(e) => setForm((f) => ({ ...f, bedrijf: e.target.value }))}
+                placeholder="Klant BV"
+              />
+            </div>
             <div style={{ flex: '1 1 260px' }}>
               <label>E-mailadres (inlog)</label>
               <input
@@ -241,6 +252,7 @@ export default function KlantenBeheerTest() {
           <table>
             <thead>
               <tr>
+                <th>Bedrijf</th>
                 <th>E-mailadres</th>
                 <th>Naam</th>
                 <th>Prijslijst</th>
@@ -253,6 +265,7 @@ export default function KlantenBeheerTest() {
             <tbody>
               {klanten.map((k) => (
                 <tr key={k.id}>
+                  <td>{k.bedrijf || '—'}</td>
                   <td>{k.email}</td>
                   <td>{k.naam || '—'}</td>
                   <td>{k.prijslijst}</td>

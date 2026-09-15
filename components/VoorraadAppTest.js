@@ -212,7 +212,7 @@ const TRANSLATIONS = {
   },
 };
 
-export default function VoorraadAppTest({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs, klantenLijst, bekekenAlsEmail }) {
+export default function VoorraadAppTest({ initialProducts, loadError, odooNotice, userEmail, isAdmin, toontPrijzen, naamplaatActief, naamplaatPrijs, klantenLijst, bekekenAlsEmail, weergaveNaam }) {
   const router = useRouter();
 
   function wisselBekekenAls(email) {
@@ -326,7 +326,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
               </button>
             ))}
           </div>
-          <span style={{ fontSize: 12, color: 'var(--steel)' }}>{userEmail}</span>
+          <span style={{ fontSize: 12, color: 'var(--steel)' }}>{weergaveNaam || userEmail}</span>
           {isAdmin && (
             <>
               <a href="/test/admin/klanten" className="btn">{t.klanten}</a>
@@ -350,14 +350,14 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
               <option value="">{t.mezelf}</option>
               {klantenLijst.map((k) => (
                 <option key={k.email} value={k.email}>
-                  {k.naam ? `${k.naam} (${k.email})` : k.email}
+                  {k.bedrijf || k.email}
                 </option>
               ))}
             </select>
           </div>
           {bekekenAlsEmail && (
             <span style={{ fontSize: 13, color: 'var(--steel)', paddingBottom: 9 }}>
-              {t.bekekenAlsInfo(bekekenAlsEmail)}
+              {t.bekekenAlsInfo(weergaveNaam || bekekenAlsEmail)}
             </span>
           )}
         </div>

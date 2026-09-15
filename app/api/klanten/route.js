@@ -29,7 +29,7 @@ export async function POST(request) {
   if (errorResponse) return errorResponse;
 
   const body = await request.json();
-  const { email, naam, prijslijst, kortingen, naamplaat_actief, naamplaat_prijs, is_admin } = body;
+  const { bedrijf, email, naam, prijslijst, kortingen, naamplaat_actief, naamplaat_prijs, is_admin } = body;
 
   if (!email || !prijslijst) {
     return NextResponse.json({ error: 'E-mailadres en prijslijst zijn verplicht.' }, { status: 400 });
@@ -47,6 +47,7 @@ export async function POST(request) {
     .from('klanten')
     .upsert(
       {
+        bedrijf: bedrijf || null,
         email: email.trim().toLowerCase(),
         naam: naam || null,
         prijslijst: String(prijslijst),
