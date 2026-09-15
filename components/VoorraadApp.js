@@ -105,6 +105,7 @@ const TRANSLATIONS = {
     filterMateriaal: 'Materiaal',
     filterFlens: 'Flenzen',
     alle: 'Alle',
+    ja: 'Ja',
     alleenOpVoorraad: 'Alleen op voorraad',
     wisFilters: 'Wis filters',
     allesWissen: 'Alles wissen',
@@ -141,6 +142,7 @@ const TRANSLATIONS = {
     filterMateriaal: 'Material',
     filterFlens: 'Flange',
     alle: 'All',
+    ja: 'Yes',
     alleenOpVoorraad: 'In stock only',
     wisFilters: 'Clear filters',
     allesWissen: 'Clear all',
@@ -177,6 +179,7 @@ const TRANSLATIONS = {
     filterMateriaal: 'Matériau',
     filterFlens: 'Bride',
     alle: 'Tous',
+    ja: 'Oui',
     alleenOpVoorraad: 'En stock uniquement',
     wisFilters: 'Effacer les filtres',
     allesWissen: 'Tout effacer',
@@ -395,13 +398,12 @@ export default function VoorraadApp({ initialProducts, loadError, odooNotice, us
               {flensBouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 9 }}>
-            <input
-              type="checkbox" id="onlyStock" checked={onlyStock}
-              onChange={(e) => setOnlyStock(e.target.checked)}
-              style={{ width: 16, height: 16 }}
-            />
-            <label htmlFor="onlyStock" style={{ textTransform: 'none', fontWeight: 600 }}>{t.alleenOpVoorraad}</label>
+          <div className="filter-field">
+            <label>{t.alleenOpVoorraad}</label>
+            <select value={onlyStock ? '1' : ''} onChange={(e) => setOnlyStock(e.target.value === '1')}>
+              <option value="">{t.alle}</option>
+              <option value="1">{t.ja}</option>
+            </select>
           </div>
           <button className="btn" onClick={resetFilters}>
             {t.wisFilters}
