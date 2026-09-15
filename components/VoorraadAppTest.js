@@ -122,6 +122,7 @@ const TRANSLATIONS = {
     zoekenChip: (s) => `Zoeken: "${s}"`,
     kwLabel: (v) => `${v} kW`,
     poligLabel: (v) => `${v}-polig`,
+    voltLabel: (v) => `${v}V`,
   },
   en: {
     langNaam: 'English',
@@ -158,6 +159,7 @@ const TRANSLATIONS = {
     zoekenChip: (s) => `Search: "${s}"`,
     kwLabel: (v) => `${v} kW`,
     poligLabel: (v) => `${v} poles`,
+    voltLabel: (v) => `${v}V`,
   },
   fr: {
     langNaam: 'Français',
@@ -194,6 +196,7 @@ const TRANSLATIONS = {
     zoekenChip: (s) => `Recherche : "${s}"`,
     kwLabel: (v) => `${v} kW`,
     poligLabel: (v) => `${v} pôles`,
+    voltLabel: (v) => `${v}V`,
   },
 };
 
@@ -280,7 +283,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
     fBouw && { label: `${t.filterBouwgrootte}: ${fBouw}`, clear: () => setFBouw('') },
     fPolen && { label: `${t.filterPolen}: ${t.poligLabel(fPolen)}`, clear: () => setFPolen('') },
     fBvorm && { label: `${t.filterBouwvorm}: ${fBvorm}`, clear: () => setFBvorm('') },
-    fVolt && { label: `${t.filterVolt}: ${fVolt}`, clear: () => setFVolt('') },
+    fVolt && { label: `${t.filterVolt}: ${t.voltLabel(fVolt)}`, clear: () => setFVolt('') },
     fIe && { label: `${t.filterIeKlasse}: ${fIe}`, clear: () => setFIe('') },
     fMateriaal && { label: `${t.filterMateriaal}: ${fmtMateriaal(fMateriaal, lang)}`, clear: () => setFMateriaal('') },
     fFlensBouw && { label: `${t.filterFlens}: ${fFlensBouw}`, clear: () => setFFlensBouw('') },
@@ -341,49 +344,49 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
           style={{ marginBottom: 14 }}
         />
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div>
+          <div className="filter-field">
             <label>{t.filterVermogen}</label>
             <select value={fVermogen} onChange={(e) => setFVermogen(e.target.value)}>
               <option value="">{t.alle}</option>
               {vermogenOptions.map((o) => <option key={o} value={o}>{t.kwLabel(o)}</option>)}
             </select>
           </div>
-          <div>
+          <div className="filter-field">
             <label>{t.filterBouwgrootte}</label>
             <select value={fBouw} onChange={(e) => setFBouw(e.target.value)}>
               <option value="">{t.alle}</option>
               {bouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          <div>
+          <div className="filter-field">
             <label>{t.filterPolen}</label>
             <select value={fPolen} onChange={(e) => setFPolen(e.target.value)}>
               <option value="">{t.alle}</option>
               {polenOptions.map((o) => <option key={o} value={o}>{t.poligLabel(o)}</option>)}
             </select>
           </div>
-          <div>
+          <div className="filter-field">
             <label>{t.filterBouwvorm}</label>
             <select value={fBvorm} onChange={(e) => setFBvorm(e.target.value)}>
               <option value="">{t.alle}</option>
               {bvormOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          <div>
+          <div className="filter-field">
             <label>{t.filterVolt}</label>
             <select value={fVolt} onChange={(e) => setFVolt(e.target.value)}>
               <option value="">{t.alle}</option>
-              {voltOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+              {voltOptions.map((o) => <option key={o} value={o}>{t.voltLabel(o)}</option>)}
             </select>
           </div>
-          <div>
+          <div className="filter-field">
             <label>{t.filterIeKlasse}</label>
             <select value={fIe} onChange={(e) => setFIe(e.target.value)}>
               <option value="">{t.alle}</option>
               {ieOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          <div>
+          <div className="filter-field">
             <label>{t.filterMateriaal}</label>
             <select value={fMateriaal} onChange={(e) => setFMateriaal(e.target.value)}>
               <option value="">{t.alle}</option>
@@ -392,7 +395,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
           </div>
         </div>
         <div style={{ display: 'flex', gap: 20, alignItems: 'flex-end', marginTop: 14, flexWrap: 'wrap' }}>
-          <div>
+          <div className="filter-field">
             <label>{t.filterFlens}</label>
             <select value={fFlensBouw} onChange={(e) => setFFlensBouw(e.target.value)}>
               <option value="">{t.alle}</option>
@@ -480,7 +483,7 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
                 <td>{p.bouwgrootte || '—'}</td>
                 <td>{p.polen ? t.poligLabel(p.polen) : '—'}</td>
                 <td>{p.bouwvorm || '—'}</td>
-                <td>{p.volt || '—'}</td>
+                <td>{p.volt ? t.voltLabel(p.volt) : '—'}</td>
                 <td>{p.ie_klasse || '—'}</td>
                 <td>{fmtMateriaal(p.materiaal, lang) || '—'}</td>
                 <td style={{ textAlign: 'right' }}>{stockFlag(p.vrije_voorraad)}</td>
