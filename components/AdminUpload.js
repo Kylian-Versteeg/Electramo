@@ -7,6 +7,9 @@ export default function AdminUpload() {
   const [status, setStatus] = useState('');
   const [statusType, setStatusType] = useState('');
   const [busy, setBusy] = useState(false);
+  const [odooStatus, setOdooStatus] = useState('');
+  const [odooStatusType, setOdooStatusType] = useState('');
+  const [odooBusy, setOdooBusy] = useState(false);
   const [geschiedenis, setGeschiedenis] = useState([]);
   const [loadingGeschiedenis, setLoadingGeschiedenis] = useState(true);
 
@@ -76,6 +79,34 @@ export default function AdminUpload() {
     }
   }
 
+  async function handleOdooSync() {
+    setOdooBusy(true);
+    setOdooStatus('Bezig met synchroniseren met Odoo...');
+    setOdooStatusType('');
+
+    try {
+      const res = await fetch('/api/odoo-sync', { method: 'POST' });
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Odoo-sync mislukt.');
+      }
+
+      setOdooStatusType('ok');
+      setOdooStatus(
+        `Bijgewerkt: ${result.updatedCount} van de ${result.totalCodes} artikelen ` +
+        `(${result.totalFromOdoo} artikelen met code gevonden in Odoo).` +
+        (result.ignoredCount > 0 ? ` ${result.ignoredCount} artikel(en) uit Odoo genegeerd (code niet in de vaste lijst).` : '')
+      );
+      await laadGeschiedenis();
+    } catch (err) {
+      setOdooStatusType('err');
+      setOdooStatus(err.message || 'Er is iets misgegaan.');
+    } finally {
+      setOdooBusy(false);
+    }
+  }
+
   function fmtDatum(iso) {
     return new Date(iso).toLocaleString('nl-NL', {
       day: '2-digit', month: '2-digit', year: 'numeric',
@@ -101,6 +132,21 @@ export default function AdminUpload() {
         Upload het dagelijkse voorraadbestand (.xlsx met kolommen Schermnaam, Vrije voorraad, Inkomend).
         Alleen deze twee kolommen worden bijgewerkt voor artikelen die al in de vaste lijst staan —
         er worden nooit nieuwe artikelen toegevoegd.
+      </p>
+
+      <h2 style={{ marginTop: 28 }}>Odoo-koppeling</h2>
+      <button type="button" className="btn" onClick={handleOdooSync} disabled={odooBusy}>
+        {odooBusy ? 'Bezig...' : '⟳ Synchroniseer met Odoo'}
+      </button>
+      {odooStatus && (
+        <div className={odooStatusType === 'err' ? 'error' : 'ok-msg'} style={{ marginTop: 10 }}>
+          {odooStatus}
+        </div>
+      )}
+      <p style={{ fontSize: 12.5, color: 'var(--steel-light)', marginTop: 14 }}>
+        Haalt vrije voorraad en inkomend per artikelcode rechtstreeks uit Odoo op en werkt
+        dezelfde artikelen bij als de Excel-upload hierboven. Gebeurt ook automatisch, elk uur
+        tussen 09:00 en 18:00.
       </p>
 
       <h2 style={{ marginTop: 28 }}>Uploadgeschiedenis</h2>

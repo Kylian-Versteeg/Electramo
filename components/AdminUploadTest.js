@@ -10,7 +10,6 @@ export default function AdminUploadTest() {
   const [odooStatus, setOdooStatus] = useState('');
   const [odooStatusType, setOdooStatusType] = useState('');
   const [odooBusy, setOdooBusy] = useState(false);
-  const [odooItems, setOdooItems] = useState(null);
   const [geschiedenis, setGeschiedenis] = useState([]);
   const [loadingGeschiedenis, setLoadingGeschiedenis] = useState(true);
 
@@ -84,7 +83,6 @@ export default function AdminUploadTest() {
     setOdooBusy(true);
     setOdooStatus('Bezig met synchroniseren met Odoo...');
     setOdooStatusType('');
-    setOdooItems(null);
 
     try {
       const res = await fetch('/api/odoo-sync', { method: 'POST' });
@@ -100,7 +98,6 @@ export default function AdminUploadTest() {
         `(${result.totalFromOdoo} artikelen met code gevonden in Odoo).` +
         (result.ignoredCount > 0 ? ` ${result.ignoredCount} artikel(en) uit Odoo genegeerd (code niet in de vaste lijst).` : '')
       );
-      setOdooItems(result.items || []);
       await laadGeschiedenis();
     } catch (err) {
       setOdooStatusType('err');
@@ -148,37 +145,9 @@ export default function AdminUploadTest() {
       )}
       <p style={{ fontSize: 12.5, color: 'var(--steel-light)', marginTop: 14 }}>
         Haalt vrije voorraad en inkomend per artikelcode rechtstreeks uit Odoo op en werkt
-        dezelfde artikelen bij als de Excel-upload hierboven — nog in test, werkt pas zodra
-        de Odoo-koppeling is ingesteld.
+        dezelfde artikelen bij als de Excel-upload hierboven. Gebeurt ook automatisch, elk uur
+        tussen 09:00 en 18:00.
       </p>
-
-      {odooItems && odooItems.length > 0 && (
-        <div style={{ marginTop: 14 }}>
-          <p style={{ fontSize: 12.5, color: 'var(--steel-light)' }}>
-            Debug — dit kwam er letterlijk uit Odoo (om te vergelijken met de artikelcodes in het portaal):
-          </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Code (uit Odoo)</th>
-                <th>Omschrijving</th>
-                <th>Vrije voorraad</th>
-                <th>Inkomend</th>
-              </tr>
-            </thead>
-            <tbody>
-              {odooItems.map((it, i) => (
-                <tr key={i}>
-                  <td>{it.code}</td>
-                  <td>{it.omschrijving}</td>
-                  <td>{it.vrije_voorraad}</td>
-                  <td>{it.inkomend}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       <h2 style={{ marginTop: 28 }}>Uploadgeschiedenis</h2>
       {loadingGeschiedenis ? (

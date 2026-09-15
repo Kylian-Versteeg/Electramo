@@ -12,7 +12,7 @@ export async function GET() {
     .from('upload_log')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(50);
+    .limit(25);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
