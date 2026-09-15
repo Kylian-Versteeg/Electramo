@@ -344,13 +344,6 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             </select>
           </div>
           <div>
-            <label>{t.filterFlens}</label>
-            <select value={fFlensBouw} onChange={(e) => setFFlensBouw(e.target.value)}>
-              <option value="">{t.alle}</option>
-              {flensBouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <div>
             <label>{t.filterBouwgrootte}</label>
             <select value={fBouw} onChange={(e) => setFBouw(e.target.value)}>
               <option value="">{t.alle}</option>
@@ -393,8 +386,15 @@ export default function VoorraadAppTest({ initialProducts, loadError, odooNotice
             </select>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-end', marginTop: 14, flexWrap: 'wrap' }}>
+          <div>
+            <label>{t.filterFlens}</label>
+            <select value={fFlensBouw} onChange={(e) => setFFlensBouw(e.target.value)}>
+              <option value="">{t.alle}</option>
+              {flensBouwOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 9 }}>
             <input
               type="checkbox" id="onlyStock" checked={onlyStock}
               onChange={(e) => setOnlyStock(e.target.checked)}
